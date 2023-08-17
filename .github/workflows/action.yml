@@ -15,8 +15,12 @@ jobs:
       with:
         src: github/licyk
         dst: gitee/licyk
-        dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}
-        dst_token:  ${{ secrets.GITEE_TOKEN }}
+        dst_key: ${{ b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACCMO98hQCnL3RwTuBWuQLyNsca1KYCQOtuV5bVLKyKW3wAAAJi4SfTzuEn0
+8wAAAAtzc2gtZWQyNTUxOQAAACCMO98hQCnL3RwTuBWuQLyNsca1KYCQOtuV5bVLKyKW3w
+AAAEC1fMtayk/XA8Swp9npv6yoj1wnTPmkU3gkUb7IUjFyEIw73yFAKcvdHBO4Fa5AvI2x
+xrUpgJA625XltUsrIpbfAAAAEzE1MTc3OTE1MDM1QDE2My5jb20BAg== }}
+        dst_token:  ${{ fd99d92c1b2a157aec4503778d01bffc }}
         static_list: 'hub-mirror-action,hashes, simple-spring'
         force_update: true
         debug: true
