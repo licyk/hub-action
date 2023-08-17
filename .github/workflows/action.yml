@@ -10,8 +10,8 @@ jobs:
     - name: Sync Github Repos To Gitee  # 名字随便起
       uses: Yikun/hub-mirror-action@master  # 使用Yikun/hub-mirror-action
       with:
-        src: github/kurisaW  # 源端账户名(github)
-        dst: gitee/kurisaW  # 目的端账户名(gitee)
+        src: github/licyk  # 源端账户名(github)
+        dst: gitee/licyk  # 目的端账户名(gitee)
         dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}  # SSH密钥对中的私钥
         dst_token:  ${{ secrets.GITEE_TOKEN }}  # Gitee账户的私人令牌
         account_type: user  # 账户类型
