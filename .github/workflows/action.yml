@@ -1,23 +1,22 @@
-on:
-  push:
-  pull_request_target:
-    branches: [master]
-name: Tests / test-user-mirror
+name: Sync Github Repos To Gitee
+
+on: [ push, delete, create ]
+
 jobs:
-  run:
-    name: Run
+  build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout source codes
-      uses: actions/checkout@v1
-    - name: Mirror Github to Gitee with white list
-      uses: ./.
+
+    - name: Sync Github Repos To Gitee  # 名字随便起
+      uses: Yikun/hub-mirror-action@master  # 使用Yikun/hub-mirror-action
       with:
-        src: github/licyk
-        dst: gitee/licyk
-        dst_key: ${{ b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZWQyNTUxOQAAACCMO98hQCnL3RwTuBWuQLyNsca1KYCQOtuV5bVLKyKW3wAAAJi4SfTzuEn08wAAAAtzc2gtZWQyNTUxOQAAACCMO98hQCnL3RwTuBWuQLyNsca1KYCQOtuV5bVLKyKW3wAAAEC1fMtayk/XA8Swp9npv6yoj1wnTPmkU3gkUb7IUjFyEIw73yFAKcvdHBO4Fa5AvI2xxrUpgJA625XltUsrIpbfAAAAEzE1MTc3OTE1MDM1QDE2My5jb20BAg== }}
-        dst_token:  ${{ fd99d92c1b2a157aec4503778d01bffc }}
-        static_list: 'hub-mirror-action,hashes, simple-spring'
-        force_update: true
-        debug: true
-        mappings: 'hashes=>hashes_gitee'
+        src: github/kurisaW  # 源端账户名(github)
+        dst: gitee/kurisaW  # 目的端账户名(gitee)
+        dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}  # SSH密钥对中的私钥
+        dst_token:  ${{ secrets.GITEE_TOKEN }}  # Gitee账户的私人令牌
+        account_type: user  # 账户类型
+        clone_style: "https"  # 使用https方式进行clone，也可以使用ssh
+        debug: true  # 启用后会显示所有执行命令
+        force_update: true  # 启用后，强制同步，即强制覆盖目的端仓库
+        static_list: "sd-webui-script,ani2xcur,scrcpy-tui"  # 静态同步列表，在此填写需要同步的仓库名称，可填写多个
+        timeout: '600s'  # git超时设置，超时后会自动重试git操作
