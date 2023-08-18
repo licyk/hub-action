@@ -1,4 +1,4 @@
-name: Sync To Gitlab for licyk.github.io
+name: Sync To Gitee for t
 
 #on: [ push, delete, create ]
 on: 
@@ -14,13 +14,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Sync to Gitlab
+      - name: Sync to Gitee
         uses: wearerequired/git-mirror-action@master
         env:
           # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
         with:
           # 注意替换为你的 GitHub 源仓库地址
-          source-repo: git@github.com:licyk/licyk.github.io.git
+          source-repo: git@github.com:licyk/t.git
           # 注意替换为你的 Gitee 目标仓库地址
-          destination-repo: git@gitlab.com:licyk/licyk-github-io.git
+          destination-repo: git@gitee.com:four-dishes/t.git
