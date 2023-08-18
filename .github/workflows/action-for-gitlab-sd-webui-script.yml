@@ -1,4 +1,4 @@
-name: Sync To Gitlab for licyk.github.io
+name: Sync To Gitlab for sd-webui-script
 
 #on: [ push, delete, create ]
 on: 
