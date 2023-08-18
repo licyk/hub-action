@@ -1,4 +1,4 @@
-name: Sync To Gitee
+name: Sync To Gitee for sd-webui-script
 
 on: [ push, delete, create ]
 
