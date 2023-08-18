@@ -38,6 +38,16 @@
 ![6.png](assets/6.png)
 ![7.png](assets/7.png)
 
-如果在github Action出现`remote: error: GE007: Your push would publish a private email address.`这个报错，则在gitee `设置`->`邮箱管理` , √去掉
+如果同步到gitee的github Action出现`remote: error: GE007: Your push would publish a private email address.`这个报错，则在gitee `设置`->`邮箱管理` , √去掉
 
 ![8.png](assets/8.png)
+
+将github同步到gitlab也是一样的方法
+第4步方法改为：
+左上角点击头像，`Preferences`->`SSH Keys`->`Add new key`，在Title输入`GITEE_RSA_PUBLIC_KEY`，Key输入上面生成SSH的`公钥`
+
+![9.png](assets/9.png)
+
+如果同步到gitlab的action运行报错时可以在项目中的`Pinned`->`Repository`->`Protected branches`右边的`Expand`,把`Allowed to force push`按钮打开，或者点`Unprotect`
+
+![10.png](assets/10.png)
