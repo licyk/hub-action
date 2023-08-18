@@ -1,22 +1,30 @@
-name: Sync Github Repos To Gitee
+name: sync2gitee
+# version: 1.0.2
+# author: [yiXu](https://github.com/yi-Xu-0100)
+# guide: [yi-Xu-0100/hub-mirror](https://github.com/yi-Xu-0100/hub-mirror)
+# template: [sync2gitee.yml](https://github.com/yi-Xu-0100/hub-mirror/blob/main/template/sync2gitee.yml)
+# lastmod: 2021-01-29 23:05:54
 
-on: [ push, delete, create ]
+on:
+  push:
+  schedule:
+    # UTC 17:00 -> CST (China) 1:00 see https://datetime360.com/cn/utc-cst-china-time/
+    - cron: '1 17 * * *'
 
 jobs:
-  build:
+  run:
+    name: Sync GitHub to Gitee
     runs-on: ubuntu-latest
     steps:
 
-    - name: Sync Github Repos To Gitee  # 名字随便起
-      uses: Yikun/hub-mirror-action@master  # 使用Yikun/hub-mirror-action
-      with:
-        src: github/licyk  # 源端账户名(github)
-        dst: gitee/licyk  # 目的端账户名(gitee)
-        dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}  # SSH密钥对中的私钥
-        dst_token:  ${{ secrets.GITEE_TOKEN }}  # Gitee账户的私人令牌
-        account_type: user  # 账户类型
-        clone_style: "https"  # 使用https方式进行clone，也可以使用ssh
-        debug: true  # 启用后会显示所有执行命令
-        force_update: true  # 启用后，强制同步，即强制覆盖目的端仓库
-        static_list: "sd-webui-script,ani2xcur,scrcpy-tui"  # 静态同步列表，在此填写需要同步的仓库名称，可填写多个
-        timeout: '600s'  # git超时设置，超时后会自动重试git操作
+      - name: Mirror the GitHub repos to Gitee
+        uses: Yikun/hub-mirror-action@v1.2
+        with:
+          src: github/licyk
+          dst: gitee/licyk
+          dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}
+          dst_token: ${{ secrets.GITEE_TOKEN }}
+          static_list: 'ani2xcur'
+          account_type: user
+          force_update: true
+          timeout: 300
