@@ -1,6 +1,14 @@
 name: Sync To Gitee for scrcpy-tui
 
-on: [ push, delete, create ]
+#on: [ push, delete, create ]
+on: 
+  schedule:
+  # * is a special character in YAML so you have to quote this string
+  # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
+  - cron: '0 0 * * *'
+  push:
+  delete:
+  create:
 
 jobs:
   build:
