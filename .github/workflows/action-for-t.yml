@@ -1,4 +1,4 @@
-name: Sync To Gitee for t
+name: Sync To Gitee for tt
 
 #on: [ push, delete, create ]
 on: 
