@@ -1,4 +1,4 @@
-name: Sync To Gitee for licyk.github.io
+name: Sync To Gitee for blog
 
 #on: [ push, delete, create ]
 on: 
@@ -21,6 +21,6 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
         with:
           # 注意替换为你的 GitHub 源仓库地址
-          source-repo: git@github.com:licyk/licyk.github.io.git
+          source-repo: git@github.com:licyk/blog.git
           # 注意替换为你的 Gitee 目标仓库地址
-          destination-repo: git@gitee.com:licyk/licyk.github.io.git
+          destination-repo: git@gitee.com:licyk/blog.git
