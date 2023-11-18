@@ -1,0 +1,115 @@
+name: Sync To Gitlab
+
+#on: [ push, delete, create ]
+on: 
+  schedule:
+  # * is a special character in YAML so you have to quote this string
+  # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
+  - cron: '0 8 * * *' #参考https://blog.csdn.net/Ximerr/article/details/123501772
+  push:
+  #delete:
+  #create:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Sync blog to Gitlab
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:licyk/blog.git
+          # 注意替换为你的 Gitlab 目标仓库地址
+          destination-repo: git@gitlab.com:licyk/blog.git
+
+      - name: Sync term-sd to Gitlab
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:licyk/term-sd.git
+          # 注意替换为你的 Gitlab 目标仓库地址
+          destination-repo: git@gitlab.com:licyk/term-sd.git
+
+      - name: Sync scrcpy-tui to Gitlab
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:licyk/scrcpy-tui.git
+          # 注意替换为你的 Gitlab 目标仓库地址
+          destination-repo: git@gitlab.com:licyk/scrcpy-tui.git
+
+      - name: Sync ani2xcur to Gitlab
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:licyk/ani2xcur.git
+          # 注意替换为你的 Gitlab 目标仓库地址
+          destination-repo: git@gitlab.com:licyk/ani2xcur.git
+
+      - name: Sync bili-dl-merge to Gitlab
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:licyk/bili-dl-merge.git
+          # 注意替换为你的 Gitlab 目标仓库地址
+          destination-repo: git@gitlab.com:licyk/bili-dl-merge.git
+
+      - name: Sync README-collection to Gitlab
+        uses: wearerequired/git-mirror-action@master
+        env:
+            # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+            SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+            # 注意替换为你的 GitHub 源仓库地址
+            source-repo: git@github.com:licyk/README-collection.git
+            # 注意替换为你的 Gitlab 目标仓库地址
+            destination-repo: git@gitlab.com:licyk/README-collection.git
+
+      - name: Sync private-code to Gitlab
+        uses: wearerequired/git-mirror-action@master
+        env:
+            # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+            SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+            # 注意替换为你的 GitHub 源仓库地址
+            source-repo: git@github.com:licyk/private-code.git
+            # 注意替换为你的 Gitlab 目标仓库地址
+            destination-repo: git@gitlab.com:licyk/private-code.git
+
+      - name: Sync hub-action to Gitlab
+        uses: wearerequired/git-mirror-action@master
+        env:
+            # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+            SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+            # 注意替换为你的 GitHub 源仓库地址
+            source-repo: git@github.com:licyk/hub-action.git
+            # 注意替换为你的 Gitlab 目标仓库地址
+            destination-repo: git@gitlab.com:licyk/hub-action.git
+
+      - name: Sync t to Gitlab
+        uses: wearerequired/git-mirror-action@master
+        env:
+            # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+            SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+            # 注意替换为你的 GitHub 源仓库地址
+            source-repo: git@github.com:licyk/t.git
+            # 注意替换为你的 Gitlab 目标仓库地址
+            destination-repo: git@gitlab.com:licyk/t.git
