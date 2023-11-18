@@ -1,4 +1,4 @@
-name: Sync To Gitee for blog
+name: Sync To Gitee
 
 #on: [ push, delete, create ]
 on: 
@@ -6,7 +6,7 @@ on:
   # * is a special character in YAML so you have to quote this string
   # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
   - cron: '0 8 * * *' #参考https://blog.csdn.net/Ximerr/article/details/123501772
-  #push:
+  push:
   #delete:
   #create:
 
@@ -14,7 +14,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Sync to Gitee
+
+      - name: Sync blog to Gitee
         uses: wearerequired/git-mirror-action@master
         env:
           # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
@@ -24,3 +25,91 @@ jobs:
           source-repo: git@github.com:licyk/blog.git
           # 注意替换为你的 Gitee 目标仓库地址
           destination-repo: git@gitee.com:licyk/blog.git
+
+      - name: Sync term-sd to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:licyk/term-sd.git
+          # 注意替换为你的 Gitee 目标仓库地址
+          destination-repo: git@gitee.com:licyk/term-sd.git
+
+      - name: Sync scrcpy-tui to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:licyk/scrcpy-tui.git
+          # 注意替换为你的 Gitee 目标仓库地址
+          destination-repo: git@gitee.com:licyk/scrcpy-tui.git
+
+      - name: Sync ani2xcur to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:licyk/ani2xcur.git
+          # 注意替换为你的 Gitee 目标仓库地址
+          destination-repo: git@gitee.com:licyk/ani2xcur.git
+
+      - name: Sync bili-dl-merge to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:licyk/bili-dl-merge.git
+          # 注意替换为你的 Gitee 目标仓库地址
+          destination-repo: git@gitee.com:licyk/bili-dl-merge.git
+
+      - name: Sync README-collection to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+            # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+            SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+            # 注意替换为你的 GitHub 源仓库地址
+            source-repo: git@github.com:licyk/README-collection.git
+            # 注意替换为你的 Gitee 目标仓库地址
+            destination-repo: git@gitee.com:licyk/README-collection.git
+
+      - name: Sync private-code to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+            # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+            SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+            # 注意替换为你的 GitHub 源仓库地址
+            source-repo: git@github.com:licyk/private-code.git
+            # 注意替换为你的 Gitee 目标仓库地址
+            destination-repo: git@gitee.com:licyk/private-code.git
+
+      - name: Sync hub-action to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+            # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+            SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+            # 注意替换为你的 GitHub 源仓库地址
+            source-repo: git@github.com:licyk/hub-action.git
+            # 注意替换为你的 Gitee 目标仓库地址
+            destination-repo: git@gitee.com:licyk/hub-action.git
+
+      - name: Sync t to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+            # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+            SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+            # 注意替换为你的 GitHub 源仓库地址
+            source-repo: git@github.com:licyk/t.git
+            # 注意替换为你的 Gitee 目标仓库地址
+            destination-repo: git@gitee.com:licyk/tt.git
