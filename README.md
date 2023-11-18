@@ -1,4 +1,5 @@
 # hub-action
+使用[git-mirror-action](https://github.com/wearerequired/git-mirror-action)进行同步
 
 ## 使用教程
 
