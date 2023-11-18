@@ -42,12 +42,12 @@
 
 ![8.png](assets/8.png)
 
-将github同步到gitlab也是一样的方法
-第4步方法改为：
+将github同步到gitlab也是一样的方法  
+第4步方法改为：  
 左上角点击头像，`Preferences`->`SSH Keys`->`Add new key`，在Title输入`GITEE_RSA_PUBLIC_KEY`，Key输入上面生成SSH的`公钥`
 
-![9.png](assets/9.png)
+![9.png](assets/10.png)
 
 如果同步到gitlab的action运行报错时可以在项目中的`Pinned`->`Repository`->`Protected branches`右边的`Expand`,把`Allowed to force push`按钮打开，或者点`Unprotect`
 
-![10.png](assets/10.png)
+![10.png](assets/9.png)
