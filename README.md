@@ -39,6 +39,72 @@
 ![6.png](assets/6.png)
 ![7.png](assets/7.png)
 
+- 同步单个项目
+```yml
+name: Sync To Gitee
+
+on: # 这里是github action的触发条件
+  schedule:
+  - cron: '0 8 * * *' # 每日24点进行同步
+  push:
+  delete:
+  create:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Sync yourreponame to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:username/yourreponame.git
+          # 注意替换为你的 Gitee 目标仓库地址
+          destination-repo: git@gitee.com:username/yourreponame.git
+```
+- 同步多个项目
+```yml
+name: Sync To Gitee
+
+on: # 这里是github action的触发条件
+  schedule:
+  - cron: '0 16 * * *' # 每日24点进行同步
+  push:
+  delete:
+  create:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Sync yourreponame_1 to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:username/yourreponame_1.git
+          # 注意替换为你的 Gitee 目标仓库地址
+          destination-repo: git@gitee.com:username/yourreponame_1.git
+
+      - name: Sync yourreponame_2 to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          # 注意替换为你的 GitHub 源仓库地址
+          source-repo: git@github.com:username/yourreponame_2.git
+          # 注意替换为你的 Gitee 目标仓库地址
+          destination-repo: git@gitee.com:username/yourreponame_2.git
+```
+
 如果同步到gitee的github Action出现`remote: error: GE007: Your push would publish a private email address.`这个报错，则在gitee `设置`->`邮箱管理` , √去掉
 
 ![8.png](assets/8.png)
