@@ -115,6 +115,6 @@ jobs:
 
 ![9.png](assets/9.png)
 
-如果同步到gitlab的action运行报错时可以在项目中的`Pinned`->`Repository`->`Protected branches`右边的`Expand`,把`Allowed to force push`按钮打开，或者点`Unprotect`
+如果同步到gitlab的action运行报错时可以在项目中的`Settings`->`Repository`->`Protected branches`右边的`Expand`,把`Allowed to force push`按钮打开，或者点`Unprotect`
 
 ![10.png](assets/10.png)
