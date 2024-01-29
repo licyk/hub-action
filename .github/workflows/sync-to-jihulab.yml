@@ -88,3 +88,11 @@ jobs:
               with:
                   source-repo: git@github.com:licyk/t.git
                   destination-repo: git@jihulab.com:licyk/t.git
+
+            - name: Sync sd-workflow to Github
+              uses: wearerequired/git-mirror-action@master
+              env:
+                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+              with:
+                  source-repo: git@github.com:licyk/sd-workflow.git
+                  destination-repo: git@jihulab.com:licyk/sd-workflow.git
