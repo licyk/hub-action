@@ -94,5 +94,5 @@ jobs:
               env:
                     SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
               with:
-                    source-repo: git@gitee.com:licyk/sd-workflow.git
-                    destination-repo: git@github.com:licyk/sd-workflow.git
+                    source-repo: git@github.com:licyk/sd-workflow.git
+                    destination-repo: git@gitee.com:licyk/sd-workflow.git
