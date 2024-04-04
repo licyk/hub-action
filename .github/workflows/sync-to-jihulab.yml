@@ -1,11 +1,11 @@
-name: Sync To Jihulab
+name: Sync To Bitbucket
 
 on: 
     schedule:
     # * is a special character in YAML so you have to quote this string
     # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
     - cron: '0 16 * * *' # 每日24点进行同步
-    push:
+    # push:
     # delete:
     # create:
 
@@ -14,7 +14,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
 
-            - name: Sync blog to Jihulab
+            - name: Sync blog to Bitbucket
               uses: wearerequired/git-mirror-action@master
               env:
                   # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
@@ -22,10 +22,10 @@ jobs:
               with:
                   # 注意替换为你的 GitHub 源仓库地址
                   source-repo: git@github.com:licyk/blog.git
-                  # 注意替换为你的 Jihulab 目标仓库地址
+                  # 注意替换为你的 Bitbucket 目标仓库地址
                   destination-repo: git@bitbucket.org:licyks/blog.git
 
-            - name: Sync term-sd to Jihulab
+            - name: Sync term-sd to Bitbucket
               uses: wearerequired/git-mirror-action@master
               env:
                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
@@ -33,7 +33,7 @@ jobs:
                   source-repo: git@github.com:licyk/term-sd.git
                   destination-repo: git@bitbucket.org:licyks/term-sd.git
 
-            - name: Sync scrcpy-tui to Jihulab
+            - name: Sync scrcpy-tui to Bitbucket
               uses: wearerequired/git-mirror-action@master
               env:
                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
@@ -41,7 +41,7 @@ jobs:
                   source-repo: git@github.com:licyk/scrcpy-tui.git
                   destination-repo: git@bitbucket.org:licyks/scrcpy-tui.git
 
-            - name: Sync ani2xcur to Jihulab
+            - name: Sync ani2xcur to Bitbucket
               uses: wearerequired/git-mirror-action@master
               env:
                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
@@ -49,7 +49,7 @@ jobs:
                   source-repo: git@github.com:licyk/ani2xcur.git
                   destination-repo: git@bitbucket.org:licyks/ani2xcur.git
 
-            - name: Sync bili-dl-merge to Jihulab
+            - name: Sync bili-dl-merge to Bitbucket
               uses: wearerequired/git-mirror-action@master
               env:
                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
@@ -57,7 +57,7 @@ jobs:
                   source-repo: git@github.com:licyk/bili-dl-merge.git
                   destination-repo: git@bitbucket.org:licyks/bili-dl-merge.git
 
-            - name: Sync README-collection to Jihulab
+            - name: Sync README-collection to Bitbucket
               uses: wearerequired/git-mirror-action@master
               env:
                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
@@ -65,7 +65,7 @@ jobs:
                   source-repo: git@github.com:licyk/README-collection.git
                   destination-repo: git@bitbucket.org:licyks/README-collection.git
 
-            - name: Sync private-code to Jihulab
+            - name: Sync private-code to Bitbucket
               uses: wearerequired/git-mirror-action@master
               env:
                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
@@ -73,7 +73,7 @@ jobs:
                   source-repo: git@github.com:licyk/private-code.git
                   destination-repo: git@bitbucket.org:licyks/private-code.git
 
-            - name: Sync hub-action to Jihulab
+            - name: Sync hub-action to Bitbucket
               uses: wearerequired/git-mirror-action@master
               env:
                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
@@ -81,7 +81,7 @@ jobs:
                   source-repo: git@github.com:licyk/hub-action.git
                   destination-repo: git@bitbucket.org:licyks/hub-action.git
 
-            - name: Sync t to Jihulab
+            - name: Sync t to Bitbucket
               uses: wearerequired/git-mirror-action@master
               env:
                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
