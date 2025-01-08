@@ -77,6 +77,7 @@ main() {
         https://ghgo.xyz/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://mirror.ghproxy.com/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://ghproxy.net/https://github.com/term_sd_git_user/term_sd_git_repo \
+        https://gh.api.99988866.xyz/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://gh-proxy.com/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://ghps.cc/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://gh.idayer.com/https://github.com/term_sd_git_user/term_sd_git_repo \
