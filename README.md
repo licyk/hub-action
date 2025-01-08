@@ -9,6 +9,7 @@
 |Github -> Gitlab|[![Sync To Gitlab](https://github.com/licyk/hub-action/actions/workflows/sync-to-gitlab.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-to-gitlab.yml)|
 |Github -> Bitbucket|[![Sync To Bitbucket](https://github.com/licyk/hub-action/actions/workflows/sync-to-bitbucket.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-to-bitbucket.yml)|
 |Github Mirror Test|[![Test Avaliable Github Mirror](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-github-mirror.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-github-mirror.yml)|
+|HuggingFace Mirror Test|[![Test Avaliable HuggingFace Mirror](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-huggingface-mirror.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-huggingface-mirror.yml)|
 
 
 ## 使用教程

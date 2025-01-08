@@ -80,7 +80,7 @@ main() {
         https://gh-proxy.com/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://ghps.cc/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://gh.idayer.com/https://github.com/term_sd_git_user/term_sd_git_repo \
-        ttps://gitclone.com/github.com/term_sd_git_user/term_sd_git_repo \
+        https://gitclone.com/github.com/term_sd_git_user/term_sd_git_repo \
     "
 
     for mirror_url in $github_mirror_list; do
