@@ -1,0 +1,27 @@
+name: Test Github Mirror
+
+on: 
+    schedule:
+    # * is a special character in YAML so you have to quote this string
+    # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
+    - cron: '0 16 * * *' # 每日24点进行同步
+    # push:
+    # delete:
+    # create:
+
+jobs:
+    Test-Github-Mirror:
+        runs-on: ubuntu-latest
+        steps:
+
+        - uses: actions/checkout@v4
+        - name: Go to WorkSpace
+        run: |
+            cd "${{ github.workspace }}"
+
+        - name: Test Avaliable Github Mirror
+        shell: bash
+        env:
+            GITHUB_TOKEN: ${{ github.token }}
+        run: |
+            bash ./scripts/test_github_mirror.sh
