@@ -74,7 +74,7 @@ main() {
     local available
 
     github_mirror_list="\
-        https://ghgo.xyz/https://github.com/term_sd_git_user/term_sd_git_repo \
+        https://ghfast.top/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://mirror.ghproxy.com/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://ghproxy.net/https://github.com/term_sd_git_user/term_sd_git_repo \
         https://gh.api.99988866.xyz/https://github.com/term_sd_git_user/term_sd_git_repo \
