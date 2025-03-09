@@ -15,6 +15,7 @@ repo_files = api.list_repo_files(
     repo_type=repo_type
 )
 
+
 print("统计文件列表中")
 for file in repo_files:
     file_list.append(file.split("/")[0])
@@ -31,12 +32,16 @@ for file_name in file_list:
 
 repo_file_list = sorted(repo_file_list)
 
-print("=" * 100)
-print(f"- {'文件名':<50} - {'数量':<10} - {'类型':<10}")
-print(f"-{'----------':<50} -{'--------':<10} -{'--------':<10}")
 
-for item in repo_file_list:
-    name, size, type_ = item
-    print(f"{name:<50} {size:<10} {type_:<10}")
+file_name_length = max([len(x[0]) for x in repo_file_list]) + 3
+count_length = max([len(str(x[1])) for x in repo_file_list]) + 5
+type_length = max([len(x[2]) for x in repo_file_list]) + 3
 
-print("=" * 100)
+print("=" * (file_name_length + count_length + type_length + 10))
+print(f"{'- 文件名':<{file_name_length - 1}} {'- 数量':<{count_length - 2}} {'- 类型':<{type_length}}")
+print(f"{('-' * file_name_length):<{file_name_length}} {('-' * count_length):<{count_length}} {('-' * (type_length + 3)):<{type_length}}")
+
+for name, size, type_ in repo_file_list:
+    print(f"{name:<{file_name_length}} {size:<{count_length}} {type_:<{type_length}}")
+
+print("=" * (file_name_length + count_length + type_length + 10))
