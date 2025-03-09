@@ -77,7 +77,11 @@ def need_install_ort_ver():
     torch_ver, cuddn_ver = get_torch_cuda_ver()
     # 缺少 Torch 版本或者 CUDNN 版本时取消判断
     if torch_ver is None or cuddn_ver is None:
+        print("PyTorch not installed")
         return None
+
+    print(f"PyTorch version: {torch_ver}")
+    print(f"PyTorch CUDDN version: {cuddn_ver}")
 
     # 检测是否安装了 onnxruntime-gpu
     ort_support_cuda_ver, ort_support_cudnn_ver = get_onnxruntime_support_cuda_version()
@@ -86,6 +90,9 @@ def need_install_ort_ver():
         # 当 onnxruntime 已安装
         ort_support_cuda_ver = get_version(ort_support_cuda_ver)
         ort_support_cudnn_ver = int(get_version(ort_support_cudnn_ver))
+
+        print(f"Onnxruntime support CUDA version: {ort_support_cuda_ver}")
+        print(f"Onnxruntime support CUDDN version: {ort_support_cudnn_ver}")
 
         # 判断 Torch 中的 CUDA 版本是否为 CUDA 12.1
         if 'cu12' in torch_ver: # CUDA 12.1
@@ -112,6 +119,7 @@ def need_install_ort_ver():
             else:
                 return 'cu118'
     else:
+        print("Onnxruntime GPU not installed")
         # 当 onnxruntime 未安装
         # 判断 Torch 中的 CUDA 版本是否为 CUDA 12.1
         if 'cu12' in torch_ver: # CUDA 12.1
@@ -165,7 +173,7 @@ def run_pip(command, desc=None, live=False):
 
 
 if __name__ == "__main__":
-    print("check onnxruntime gpu")
+    print("Check Onnxruntime GPU")
     ver = need_install_ort_ver()
 
     if ver == "cu118":
@@ -184,4 +192,4 @@ if __name__ == "__main__":
         run_pip("uninstall onnxruntime-gpu -y", "onnxruntime-gpu", live=True)
         run_pip("install onnxruntime-gpu==1.17.1 --no-cache-dir", "onnxruntime-gpu==1.17.1", live=True)
     else:
-        print("no onnxruntime-gpu version issue")
+        print("No Onnxruntime GPU version issue")

@@ -1,0 +1,28 @@
+name: List HuggingFace Repo
+
+on:
+  push:
+    branches:
+      - main
+  delete:
+  create:
+
+jobs:
+  List-HuggingFace-Repo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: List files in the repository
+        run: |
+          cd "${{ github.workspace }}"
+          ls "${{ github.workspace }}"
+
+      - name: Config HuggingFace Python Library
+        shell: bash
+        run: |
+          pip install huggingface_hub --break-system-package
+
+      - name: List files in HuggingFace repository
+        shell: bash
+        run: |
+          python "${{ github.workspace }}/scripts/list_hf_repo.py"
