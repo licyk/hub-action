@@ -32,7 +32,7 @@ for file_name in file_list:
 repo_file_list = sorted(repo_file_list)
 
 print("=" * 100)
-print(f"- {'文件名':<50} - {'大小':<10} - {'类型':<10}")
+print(f"- {'文件名':<50} - {'数量':<10} - {'类型':<10}")
 print(f"-{'----------':<50} -{'--------':<10} -{'--------':<10}")
 
 for item in repo_file_list:
