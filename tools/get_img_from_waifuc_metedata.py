@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import copy
+import time
 import hashlib
 import logging
 import argparse
@@ -163,6 +164,7 @@ class ModelDownload:
     def start_threads(self, num_threads=16):
         threads = []
         self.start_time = datetime.datetime.now()
+        time.sleep(0.1)
         for _ in range(num_threads):
             thread = threading.Thread(target=self.worker)
             thread.start()
