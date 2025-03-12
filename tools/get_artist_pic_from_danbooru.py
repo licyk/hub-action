@@ -53,7 +53,7 @@ def main():
 
     source = DanbooruSource(tag)
     source.attach(
-        HeadCountAction(1), # only 1 head,
+        # HeadCountAction(1), # only 1 head,
         ModeConvertAction('RGB', 'white'), # 以RGB色彩模式加载图像并将透明背景替换为白色背景
         ClassFilterAction(['illustration', 'bangumi']),  # 丢弃漫画或3D图像
         FilterSimilarAction('all'),  # 丢弃相似或重复的图像
