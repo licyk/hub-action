@@ -56,10 +56,10 @@ jobs:
           git clone "$GIT_URL" "${{ github.workspace }}/repo"
           cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/pypi"
           cd "${{ github.workspace }}/repo"
-          git add -A
-          git commit -m "Build PyPI. Time: $(date +'%Y-%m-%d %H:%M:%S')"
+          git add -A || true
+          git commit -m "Build PyPI. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
 
       - name: Push Repo
         run: |
           cd "${{ github.workspace }}/repo"
-          git push origin HEAD:gh-pages
+          git push origin HEAD:gh-pages || true
