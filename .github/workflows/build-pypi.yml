@@ -32,5 +32,33 @@ jobs:
       - name: Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: artifact
+          name: pypi_file
           path: ${{ github.workspace }}/artifact/
+
+      - name: Configure Git
+        env:
+          DEPLOY_PRI: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+          GIT_USERNAME: ${{ github.repository_owner }}
+          GIT_EMAIL: ${{ github.repository_owner }}@user.github.com
+        run: |
+          sudo timedatectl set-timezone "Asia/Shanghai"
+          mkdir -p ~/.ssh/
+          echo "$DEPLOY_PRI" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global user.name "$GIT_USERNAME"
+          git config --global user.email "$GIT_EMAIL"
+        - name: Commit Repo
+          env:
+            GIT_URL: 'git@github.com:licyk/t.git' # 把它换成项目的地址，注意要用 SSH 格式的
+          run: |
+            cp -rf "${{ github.workspace }}/artifact" "${{ github.workspace }}/repo"
+            cd "${{ github.workspace }}/repo"
+            git init
+            git remote add origin "$GIT_URL"
+            git add -A
+            git commit -m "Blog auto generated. Time: $(date +'%Y-%m-%d %H:%M:%S')"
+        - name: Push Repo
+          run: |
+            cd "${{ github.workspace }}/repo"
+            git push origin HEAD:gh-pages --force
