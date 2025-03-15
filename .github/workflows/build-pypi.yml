@@ -54,11 +54,10 @@ jobs:
           GIT_URL: 'git@github.com:licyk/t.git'
         run: |
           cp -rf "${{ github.workspace }}/artifact" "${{ github.workspace }}/repo"
+          git clone "$GIT_URL" "${{ github.workspace }}/repo"
           cd "${{ github.workspace }}/repo"
-          git init
-          git remote add origin "$GIT_URL"
           git add -A
-          git commit -m "Blog auto generated. Time: $(date +'%Y-%m-%d %H:%M:%S')"
+          git commit -m "Build Pages. Time: $(date +'%Y-%m-%d %H:%M:%S')"
 
       - name: Push Repo
         run: |
