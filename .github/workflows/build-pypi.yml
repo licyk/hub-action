@@ -1,0 +1,30 @@
+name: Build PyPI
+
+on:
+  push:
+    branches:
+      - main
+  delete:
+  create:
+
+jobs:
+  Build-PyPI:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: List files in the repository
+        run: |
+          cd "${{ github.workspace }}"
+          ls "${{ github.workspace }}"
+
+      - name: Config HuggingFace Python Library
+        shell: bash
+        run: |
+          pip install huggingface_hub modelscope requests --break-system-package
+
+      - name: Build PyPI List
+        shell: bash
+        env:
+          root_path: ${{ github.workspace }}/artifact
+        run: |
+          python "${{ github.workspace }}/scripts/build_pypi.py"
