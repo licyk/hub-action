@@ -28,3 +28,9 @@ jobs:
           root_path: ${{ github.workspace }}/artifact
         run: |
           python "${{ github.workspace }}/scripts/build_pypi.py"
+
+      - name: Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact
+          path: ${{ github.workspace }}/artifact/
