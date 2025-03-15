@@ -48,17 +48,19 @@ jobs:
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           git config --global user.name "$GIT_USERNAME"
           git config --global user.email "$GIT_EMAIL"
-        - name: Commit Repo
-          env:
-            GIT_URL: 'git@github.com:licyk/t.git' # 把它换成项目的地址，注意要用 SSH 格式的
-          run: |
-            cp -rf "${{ github.workspace }}/artifact" "${{ github.workspace }}/repo"
-            cd "${{ github.workspace }}/repo"
-            git init
-            git remote add origin "$GIT_URL"
-            git add -A
-            git commit -m "Blog auto generated. Time: $(date +'%Y-%m-%d %H:%M:%S')"
-        - name: Push Repo
-          run: |
-            cd "${{ github.workspace }}/repo"
-            git push origin HEAD:gh-pages --force
+
+      - name: Commit Repo
+        env:
+          GIT_URL: 'git@github.com:licyk/t.git'
+        run: |
+          cp -rf "${{ github.workspace }}/artifact" "${{ github.workspace }}/repo"
+          cd "${{ github.workspace }}/repo"
+          git init
+          git remote add origin "$GIT_URL"
+          git add -A
+          git commit -m "Blog auto generated. Time: $(date +'%Y-%m-%d %H:%M:%S')"
+
+      - name: Push Repo
+        run: |
+          cd "${{ github.workspace }}/repo"
+          git push origin HEAD:gh-pages --force
