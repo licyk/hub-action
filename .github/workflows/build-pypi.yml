@@ -53,8 +53,8 @@ jobs:
         env:
           GIT_URL: 'git@github.com:licyk/t.git'
         run: |
-          cp -rf "${{ github.workspace }}/artifact" "${{ github.workspace }}/repo"
           git clone "$GIT_URL" "${{ github.workspace }}/repo"
+          cp -rf "${{ github.workspace }}/artifact" "${{ github.workspace }}/repo/pypi"
           cd "${{ github.workspace }}/repo"
           git add -A
           git commit -m "Build Pages. Time: $(date +'%Y-%m-%d %H:%M:%S')"
