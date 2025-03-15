@@ -60,12 +60,11 @@ def get_huggingface_repo_file(repo_id: str, repo_type: str) -> list:
 def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
     api = modelscope.HubApi()
     from modelscope.hub.snapshot_download import fetch_repo_files
-    from modelscope.hub.api import HubApi, DEFAULT_DATASET_REVISION
+    from modelscope.hub.api import DEFAULT_DATASET_REVISION
 
     file_list = []
     file_list_url = []
     def _get_file_path(repo_files: list) -> list:
-            """获取 ModelScope Api 返回的仓库列表中的模型路径"""
             file_list = []
             for file in repo_files:
                     if file['Type'] != 'tree':
@@ -120,13 +119,6 @@ def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
 
 def build_pypi_list(file_list: list) -> list:
     html_string = []
-    """
-    
-    <a href="https://modelscope.cn/models/licyks/wheels/resolve/master/bitsandbytes/bitsandbytes-0.41.1-py3-none-win_amd64.whl">
-        bitsandbytes-0.41.1-py3-none-win_amd64.whl
-    </a><br>
-
-    """
 
     for file, url in file_list:
         html_string.append(f"<a href=\"{url}\">")
@@ -141,6 +133,7 @@ def write_content_to_file(content: list, path: Union[str, Path]) -> None:
         return
 
     print(f"写入文件到 {path}")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding = "utf8") as f:
         for item in content:
             f.write(item + "\n")
