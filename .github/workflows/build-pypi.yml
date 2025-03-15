@@ -62,4 +62,4 @@ jobs:
       - name: Push Repo
         run: |
           cd "${{ github.workspace }}/repo"
-          git push origin HEAD:gh-pages --force
+          git push origin HEAD:gh-pages
