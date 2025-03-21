@@ -1,0 +1,17 @@
+name: Build insightface
+
+on:
+  push:
+  delete:
+  create:
+
+jobs:
+  Build-insightface:
+    name: Build insightface
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enter Workspace
+        shell: pwsh
+        run: |
+          pip install insightface
