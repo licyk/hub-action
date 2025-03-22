@@ -1,0 +1,67 @@
+name: Build PyPI
+
+on: 
+    schedule:
+    # * 是一个特殊字符在 YAML 中，所以你需要引用这个字符串
+    # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
+    - cron: '0 16 * * *' # 每日24点进行同步
+    push:
+    delete:
+    create:
+
+jobs:
+  Build-PyPI:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: List files in the repository
+        run: |
+          cd "${{ github.workspace }}"
+          ls "${{ github.workspace }}"
+
+      - name: Config HuggingFace Python Library
+        shell: bash
+        run: |
+          pip install huggingface_hub modelscope requests --break-system-package
+
+      - name: Build PyPI List
+        shell: bash
+        env:
+          root_path: ${{ github.workspace }}/artifact
+        run: |
+          python "${{ github.workspace }}/scripts/build_download_page.py"
+
+      - name: Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pypi_file
+          path: ${{ github.workspace }}/artifact/
+
+      - name: Configure Git
+        env:
+          DEPLOY_PRI: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+          GIT_USERNAME: ${{ github.repository_owner }}
+          GIT_EMAIL: ${{ github.repository_owner }}@user.github.com
+        run: |
+          sudo timedatectl set-timezone "Asia/Shanghai"
+          mkdir -p ~/.ssh/
+          echo "$DEPLOY_PRI" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global user.name "$GIT_USERNAME"
+          git config --global user.email "$GIT_EMAIL"
+
+      - name: Commit Repo
+        env:
+          GIT_URL: 'git@github.com:licyk/t.git'
+        run: |
+          git clone "$GIT_URL" "${{ github.workspace }}/repo"
+          cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/sd_portable"
+          cd "${{ github.workspace }}/repo"
+          git add -A || true
+          git commit -m "Build SD Protable Download Page. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
+
+      - name: Push Repo
+        run: |
+          cd "${{ github.workspace }}/repo"
+          git push origin HEAD:gh-pages || true
