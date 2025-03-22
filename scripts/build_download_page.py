@@ -135,7 +135,14 @@ def main() -> None:
     <title>下载列表</title>
 </head>
 <body>
-
+    <h1>AI 绘画 / 训练整合包列表</h1>
+    原仓库：<a href="https://huggingface.co/licyk/sdnote/tree/main/portable">HuggingFace</a> / <a href="https://modelscope.cn/models/licyks/sdnote/files">ModelScope</a>
+    <br>
+    <br>
+    Stable 列表为稳定版本, Nightly 为测试版本, 根据需求自行下载
+    <br>
+    <br>
+    <br>
     """
 
     content_e = """
@@ -148,7 +155,7 @@ def main() -> None:
 
     pypi_hf_html_s = build_download_page_list(stable)
     pypi_hf_html_e = build_download_page_list(nightly)
-    html_str = content_s + ["<h1>Stable</h1>"] + pypi_hf_html_s + ["<h1>Nightly</h1>"] + pypi_hf_html_e + content_e
+    html_str = content_s + ["<h2>Stable</h2>"] + pypi_hf_html_s + ["<h2>Nightly</h2>"] + pypi_hf_html_e + content_e
 
     root_path = os.environ.get("root_path", os.getcwd())
     write_content_to_file(html_str, os.path.join(root_path, "index.html"))
