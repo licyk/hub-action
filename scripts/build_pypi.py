@@ -181,10 +181,10 @@ def main() -> None:
 
     root_path = os.environ.get("root_path", os.getcwd())
 
-    write_content_to_file(pypi_gh_html, os.path.join(root_path, "index.html"))
+    write_content_to_file(pypi_gh_html, os.path.join(root_path, "index_gh_mirror.html"))
     write_content_to_file(pypi_hf_html, os.path.join(root_path, "index_hf.html"))
     write_content_to_file(pypi_hf_mirror_html, os.path.join(root_path, "index_hf_mirror.html"))
-    write_content_to_file(pypi_ms_html, os.path.join(root_path, "index_ms_mirror.html"))
+    write_content_to_file(pypi_ms_html, os.path.join(root_path, "index.html"))
 
 if __name__ == "__main__":
     main()
