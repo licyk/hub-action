@@ -132,19 +132,23 @@ def main() -> None:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            line-height: 1.5;
+        }
+    </style>
     <title>下载列表</title>
 </head>
 <body>
     <h1>AI 绘画 / 训练整合包列表</h1>
-    基于 sd-webui-all-in-one/Installer 全自动构建整合包
+    基于 <a href="https://github.com/licyk/sd-webui-all-in-one?tab=readme-ov-file#installer">sd-webui-all-in-one/Installer</a> 全自动构建整合包
     <br>
-    项目地址：https://github.com/licyk/sd-webui-all-in-one
+    项目地址：<a href="https://github.com/licyk/sd-webui-all-in-one">https://github.com/licyk/sd-webui-all-in-one</a>
     <br>
     原仓库：<a href="https://huggingface.co/licyk/sdnote/tree/main/portable">HuggingFace</a> / <a href="https://modelscope.cn/models/licyks/sdnote/files">ModelScope</a>
     <br>
     <br>
     Stable 列表为稳定版本, Nightly 为测试版本, 根据需求自行下载
-    <br>
     <br>
     <br>
     """
