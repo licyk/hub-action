@@ -136,6 +136,10 @@ def main() -> None:
 </head>
 <body>
     <h1>AI 绘画 / 训练整合包列表</h1>
+    基于 sd-webui-all-in-one/Installer 全自动构建整合包
+    <br>
+    项目地址：https://github.com/licyk/sd-webui-all-in-one
+    <br>
     原仓库：<a href="https://huggingface.co/licyk/sdnote/tree/main/portable">HuggingFace</a> / <a href="https://modelscope.cn/models/licyks/sdnote/files">ModelScope</a>
     <br>
     <br>
