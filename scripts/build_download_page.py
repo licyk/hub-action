@@ -4,7 +4,6 @@ from typing import Union
 from pathlib import Path
 
 
-
 def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
     api = modelscope.HubApi()
     from modelscope.hub.snapshot_download import fetch_repo_files
@@ -12,20 +11,18 @@ def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
 
     file_list = []
     file_list_url = []
+
     def _get_file_path(repo_files: list) -> list:
-            file_list = []
-            for file in repo_files:
-                    if file['Type'] != 'tree':
-                        file_list.append(file["Path"])
-            return file_list
+        file_list = []
+        for file in repo_files:
+            if file["Type"] != "tree":
+                file_list.append(file["Path"])
+        return file_list
 
     if repo_type == "model":
         try:
             print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表")
-            repo_files = api.get_model_files(
-                model_id=repo_id,
-                recursive=True
-            )
+            repo_files = api.get_model_files(model_id=repo_id, recursive=True)
             file_list = _get_file_path(repo_files)
         except Exception as e:
             print(f"获取 {repo_id} (类型: {repo_type}) 仓库的文件列表出现错误: {e}")
@@ -38,7 +35,7 @@ def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
                 _api=api,
                 group_or_owner=user,
                 name=name,
-                revision=DEFAULT_DATASET_REVISION
+                revision=DEFAULT_DATASET_REVISION,
             )
             file_list = _get_file_path(repo_files)
         except Exception as e:
@@ -73,7 +70,7 @@ def build_download_page_list(file_list: list) -> list:
 
     html_string.append("<ul>")
     for file, url in file_list:
-        html_string.append(f"<li><a href=\"{url}\">")
+        html_string.append(f'<li><a href="{url}">')
         html_string.append(f"    {os.path.basename(file)}")
         html_string.append(f"</a></li>")
 
@@ -88,7 +85,7 @@ def write_content_to_file(content: list, path: Union[str, Path]) -> None:
 
     print(f"写入文件到 {path}")
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding = "utf8") as f:
+    with open(path, "w", encoding="utf8") as f:
         for item in content:
             f.write(item + "\n")
 
@@ -117,14 +114,10 @@ def split_release_list(file_list: list) -> Union[list, list]:
 
 
 def main() -> None:
-    ms_file = get_modelscope_repo_file(
-        repo_id="licyks/sdnote",
-        repo_type="model"
-    )
+    ms_file = get_modelscope_repo_file(repo_id="licyks/sdnote", repo_type="model")
     ms_file = filter_portable_file(ms_file)
 
     stable, nightly = split_release_list(ms_file)
-
 
     content_s = """
 <!DOCTYPE html>
@@ -132,6 +125,7 @@ def main() -> None:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
     <style>
         body {
             line-height: 1.5;
@@ -165,11 +159,17 @@ def main() -> None:
 
     pypi_hf_html_s = build_download_page_list(stable)
     pypi_hf_html_e = build_download_page_list(nightly)
-    html_str = content_s + ["<h3>Stable</h3>"] + pypi_hf_html_s + ["<h3>Nightly</h3>"] + pypi_hf_html_e + content_e
+    html_str = (
+        content_s
+        + ["<h3>Stable</h3>"]
+        + pypi_hf_html_s
+        + ["<h3>Nightly</h3>"]
+        + pypi_hf_html_e
+        + content_e
+    )
 
     root_path = os.environ.get("root_path", os.getcwd())
     write_content_to_file(html_str, os.path.join(root_path, "index.html"))
-
 
 
 if __name__ == "__main__":
