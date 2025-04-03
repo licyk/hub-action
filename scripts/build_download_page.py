@@ -2,6 +2,8 @@ import os
 import modelscope
 from typing import Union
 from pathlib import Path
+from datetime import datetime, timezone, timedelta
+
 
 
 def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
@@ -119,7 +121,11 @@ def main() -> None:
 
     stable, nightly = split_release_list(ms_file)
 
-    content_s = """
+    current_time = (
+        datetime.now(timezone.utc)+ timedelta(hours=8)
+    ).strftime("%Y-%m-%d %H:%M:%S")
+
+   content_s = """
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -144,6 +150,9 @@ def main() -> None:
     <br>
     Stable 列表为稳定版本, Nightly 为测试版本, 根据需求自行下载
     <br>
+    <br>
+    """ + f"""
+    列表更新时间：{current_time}
     <br>
     ===================================================
     <h2>下载列表</h2>
