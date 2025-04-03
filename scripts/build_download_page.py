@@ -125,7 +125,7 @@ def main() -> None:
         datetime.now(timezone.utc)+ timedelta(hours=8)
     ).strftime("%Y-%m-%d %H:%M:%S")
 
-   content_s = """
+    content_s = """
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
