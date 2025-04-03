@@ -1,4 +1,4 @@
-name: Build SD Protable Nighyly Download Link
+name: Build SD Protable Nightly Download Link
 
 on: 
     schedule:
@@ -10,7 +10,7 @@ on:
     create:
 
 jobs:
-  Build-SD-Protable-Nighyly-Download-Link:
+  Build-SD-Protable-Nightly-Download-Link:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
         run: |
           pip install huggingface_hub modelscope requests --break-system-package
 
-      - name: Build SD Protable Nighyly Download Link
+      - name: Build SD Protable Nightly Download Link
         shell: bash
         env:
           root_path: ${{ github.workspace }}/artifact
@@ -60,7 +60,7 @@ jobs:
           cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/sd_portable"
           cd "${{ github.workspace }}/repo"
           git add -A || true
-          git commit -m "Build SD Protable Download Page. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
+          git commit -m "Build SD Protable Nightly Download Link. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
 
       - name: Push Repo
         run: |
