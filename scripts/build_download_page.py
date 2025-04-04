@@ -64,18 +64,21 @@ def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
     return file_list_url
 
 
-def build_download_page_list(file_list: list) -> list:
+def build_download_page_list(package_list: list) -> list:
     html_string = []
-
-    if not file_list:
-        return ["<ul><li>无</li></ul>"]
-
     html_string.append("<ul>")
-    for file, url in file_list:
-        html_string.append(f'<li><a href="{url}">')
-        html_string.append(f"    {os.path.basename(file)}")
-        html_string.append(f"</a></li>")
-
+    for p_type, pkg_list in package_list:
+        html_string.append(f"<li>{replace_package_name(p_type)}</li>")
+        html_string.append("<ul>")
+        for p_path, url in pkg_list:
+            filename = os.path.basename(p_path)
+            tmp = f"""
+<li><a href="{url}">
+    {filename}
+</a></li>
+            """
+            html_string.append(tmp)
+        html_string.append("</ul>")
     html_string.append("</ul>")
 
     return html_string
@@ -84,6 +87,10 @@ def build_download_page_list(file_list: list) -> list:
 def write_content_to_file(content: list, path: Union[str, Path]) -> None:
     if len(content) == 0:
         return
+
+    dir_path = os.path.dirname(path)
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path, exist_ok=True)
 
     print(f"写入文件到 {path}")
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -115,11 +122,67 @@ def split_release_list(file_list: list) -> Union[list, list]:
     return stable_list, nightly_list
 
 
+def classify_package(package_list: list) -> list:
+    portable_type = set()
+    file_list = []
+
+    for a, b in package_list:
+        portable_type.add(os.path.basename(a).split("_licyk_")[0])
+
+    for p_type in list(portable_type):
+        tmp = []
+        for a, b in package_list:
+            filename = os.path.basename(a)
+            if filename.startswith(f"{p_type}_licyk_"):
+                tmp.append([a, b])
+
+        file_list.append([p_type, tmp])
+
+    return file_list
+
+
+def replace_package_name(name: str) -> str:
+    if name == "sd_webui":
+        return "Stable Diffusion WebUI"
+
+    if name == "sd_webui_forge":
+        return "Stable Diffusion WebUI Forge"
+
+    if name == "sd_webui_reforge":
+        return "Stable Diffusion WebUI reForge"
+
+    if name == "comfyui":
+        return "ComfyUI"
+
+    if name == "fooocus":
+        return "Fooocus"
+
+    if name == "invokeai":
+        return "InvokeAI"
+
+    if name == "sd_trainer":
+        return "SD Trainer"
+
+    if name == "kohya_gui":
+        return "Kohya GUI"
+
+    if name == "sd_scripts":
+        return "SD Scripts"
+
+    if name == "musubi_tuner":
+        return "Musubi Tuner"
+
+    return name
+
+
 def main() -> None:
     ms_file = get_modelscope_repo_file(repo_id="licyks/sdnote", repo_type="model")
     ms_file = filter_portable_file(ms_file)
-
     stable, nightly = split_release_list(ms_file)
+    stable = classify_package(stable)
+    nightly = classify_package(nightly)
+    html_string_stable = build_download_page_list(stable)
+    html_string_nightly = build_download_page_list(nightly)
 
     current_time = (
         datetime.now(timezone.utc)+ timedelta(hours=8)
@@ -163,22 +226,18 @@ def main() -> None:
 </html>
     """
 
-    content_s = content_s.strip().split("\n")
-    content_e = content_e.strip().split("\n")
-
-    pypi_hf_html_s = build_download_page_list(stable)
-    pypi_hf_html_e = build_download_page_list(nightly)
-    html_str = (
-        content_s
+    package_list_html = (
+        content_s.strip().split("\n")
         + ["<h3>Stable</h3>"]
-        + pypi_hf_html_s
+        + html_string_stable
         + ["<h3>Nightly</h3>"]
-        + pypi_hf_html_e
-        + content_e
+        + html_string_nightly
+        + content_e.strip().split("\n")
     )
-
     root_path = os.environ.get("root_path", os.getcwd())
-    write_content_to_file(html_str, os.path.join(root_path, "index.html"))
+
+    write_content_to_file(package_list_html, os.path.join(root_path, "index.html"))
+
 
 
 if __name__ == "__main__":
