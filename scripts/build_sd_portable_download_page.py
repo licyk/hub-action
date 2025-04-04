@@ -213,6 +213,8 @@ def main() -> None:
     <br>
     Stable 列表为稳定版本, Nightly 为测试版本, 根据需求自行下载
     <br>
+    若整合包无法解压，请下载并安装 <a href="https://7-zip.org/">7-Zip</a> 后再尝试解压
+    <br>
     <br>
     """ + f"""
     列表更新时间：{current_time}
