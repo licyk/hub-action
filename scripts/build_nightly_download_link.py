@@ -1,4 +1,5 @@
 import os
+import re
 import modelscope
 from typing import Union
 from pathlib import Path
@@ -127,7 +128,59 @@ def split_release_list(file_list: list) -> Union[list, list]:
     return stable_list, nightly_list
 
 
-def find_latest_package(package_list: list) -> list:
+def compare_versions(version1: str, version2: str) -> int:
+    try:
+        nums1 = re.sub(r'[a-zA-Z]+', '', version1).replace('-', '.').replace('+', '.').split(".")
+        nums2 = re.sub(r'[a-zA-Z]+', '', version2).replace('-', '.').replace('+', '.').split(".")
+    except:
+        return 0
+
+    for i in range(max(len(nums1), len(nums2))):
+        num1 = int(nums1[i]) if i < len(nums1) else 0
+        num2 = int(nums2[i]) if i < len(nums2) else 0
+
+        if num1 == num2:
+            continue
+        elif num1 > num2:
+            return 1
+        else:
+            return -1
+
+    return 0
+
+
+def find_latest_package_stable(package_list: list) -> list:
+    portable_type = set()
+    file_list = []
+
+    for a, b in package_list:
+        portable_type.add(os.path.basename(a).split("_licyk_")[0])
+
+    for p_type in list(portable_type):
+        tmp = []
+        for a, b in package_list:
+            filename = os.path.basename(a)
+            if filename.startswith(f"{p_type}_licyk_"):
+                tmp.append([a, b])
+
+        max_version = "0.0"
+        for a, b in tmp:
+            filename = os.path.basename(a)
+            ver = filename.split(f"{p_type}_licyk_v").pop().split(".7z")[0]
+            if compare_versions(ver, max_version) == 1:
+                max_version = ver
+
+        package_name = f"{p_type}_licyk_v{max_version}.7z"
+
+        for a, b in tmp:
+            if package_name in a:
+                file_list.append([p_type, a, b])
+                break
+
+    return file_list
+
+
+def find_latest_package_nightly(package_list: list) -> list:
     portable_type = set()
     file_list = []
 
@@ -153,6 +206,7 @@ def find_latest_package(package_list: list) -> list:
         for a, b in tmp:
             if package_name in a:
                 file_list.append([p_type, a, b])
+                break
 
     return file_list
 
@@ -160,14 +214,20 @@ def find_latest_package(package_list: list) -> list:
 def main() -> None:
     ms_file = get_modelscope_repo_file(repo_id="licyks/sdnote", repo_type="model")
     ms_file = filter_portable_file(ms_file)
-    _, nightly = split_release_list(ms_file)
-    latest = find_latest_package(nightly)
+    stable, nightly = split_release_list(ms_file)
+    stable = find_latest_package_stable(stable)
+    nightly = find_latest_package_nightly(nightly)
     root_path = os.environ.get("root_path", os.getcwd())
 
-    for portable_type, file_path, url in latest:
+    for portable_type, file_path, url in stable:
         filename = os.path.basename(file_path)
         html_string = [build_download_page(filename, url)]
-        write_content_to_file(html_string, os.path.join(root_path, portable_type, "index.html"))
+        write_content_to_file(html_string, os.path.join(root_path, "stable", portable_type, "index.html"))
+
+    for portable_type, file_path, url in nightly:
+        filename = os.path.basename(file_path)
+        html_string = [build_download_page(filename, url)]
+        write_content_to_file(html_string, os.path.join(root_path, "nightly", portable_type, "index.html"))
 
 
 if __name__ == "__main__":
