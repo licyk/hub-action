@@ -129,7 +129,9 @@ def classify_package(package_list: list) -> list:
     for a, b in package_list:
         portable_type.add(os.path.basename(a).split("_licyk_")[0])
 
-    for p_type in list(portable_type):
+    portable_type = sorted(list(portable_type))
+
+    for p_type in portable_type:
         tmp = []
         for a, b in package_list:
             filename = os.path.basename(a)
