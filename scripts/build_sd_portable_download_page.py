@@ -153,6 +153,9 @@ def replace_package_name(name: str) -> str:
     if name == "sd_webui_reforge":
         return "Stable Diffusion WebUI reForge"
 
+    if name == "sd_next":
+        return "SD Next"
+
     if name == "comfyui":
         return "ComfyUI"
 
