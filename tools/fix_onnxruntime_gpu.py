@@ -180,16 +180,16 @@ if __name__ == "__main__":
         os.environ["PIP_INDEX_URL"] = "https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-11/pypi/simple/"
         os.environ["PIP_EXTRA_INDEX_URL"] = "https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-11/pypi/simple/"
         run_pip("uninstall onnxruntime-gpu -y", "onnxruntime-gpu", live=True)
-        run_pip("install onnxruntime-gpu>=1.18.1 --no-cache-dir", "onnxruntime-gpu>=1.18.1", live=True)
+        run_pip('install "onnxruntime-gpu>=1.18.1" --no-cache-dir', "onnxruntime-gpu>=1.18.1", live=True)
     elif ver == "cu121cudnn9":
         os.environ["PIP_INDEX_URL"] = "https://mirrors.cloud.tencent.com/pypi/simple"
         os.environ["PIP_EXTRA_INDEX_URL"] = "https://mirrors.cernet.edu.cn/pypi/web/simple"
         run_pip("uninstall onnxruntime-gpu -y", "onnxruntime-gpu", live=True)
-        run_pip("install onnxruntime-gpu>=1.19.0 --no-cache-dir", "onnxruntime-gpu>=1.19.0", live=True)
+        run_pip('install "onnxruntime-gpu>=1.19.0" --no-cache-dir', "onnxruntime-gpu>=1.19.0", live=True)
     elif ver == "cu121cudnn8":
         os.environ["PIP_INDEX_URL"] = "https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/"
         os.environ["PIP_EXTRA_INDEX_URL"] = "https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/"
         run_pip("uninstall onnxruntime-gpu -y", "onnxruntime-gpu", live=True)
-        run_pip("install onnxruntime-gpu==1.17.1 --no-cache-dir", "onnxruntime-gpu==1.17.1", live=True)
+        run_pip('install "onnxruntime-gpu==1.17.1" --no-cache-dir', "onnxruntime-gpu==1.17.1", live=True)
     else:
         print("No Onnxruntime GPU version issue")
