@@ -13,15 +13,10 @@ jobs:
     Test-Github-Mirror:
         runs-on: ubuntu-latest
         steps:
-
         - uses: actions/checkout@v4
-        - name: Go to WorkSpace
-          run: |
-            cd "${{ github.workspace }}"
-
         - name: Test Avaliable Github Mirror
           shell: bash
           env:
             GITHUB_TOKEN: ${{ github.token }}
           run: |
-            bash ./scripts/test_github_mirror.sh
+            bash "${{ github.workspace }}/scripts/test_github_mirror.sh"

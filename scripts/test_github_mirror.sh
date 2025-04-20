@@ -61,6 +61,28 @@ test_github_mirror() {
 }
 
 
+get_github_mirror_list() {
+    cat<<EOF
+https://ghfast.top/https://github.com/term_sd_git_user/term_sd_git_repo
+https://mirror.ghproxy.com/https://github.com/term_sd_git_user/term_sd_git_repo
+https://ghproxy.net/https://github.com/term_sd_git_user/term_sd_git_repo
+https://gh.api.99988866.xyz/https://github.com/term_sd_git_user/term_sd_git_repo
+https://gh-proxy.com/https://github.com/term_sd_git_user/term_sd_git_repo
+https://ghps.cc/https://github.com/term_sd_git_user/term_sd_git_repo
+https://gh.idayer.com/https://github.com/term_sd_git_user/term_sd_git_repo
+https://gitclone.com/github.com/term_sd_git_user/term_sd_git_repo
+https://ghproxy.1888866.xyz/github.com/term_sd_git_user/term_sd_git_repo
+https://slink.ltd/https://github.com/term_sd_git_user/term_sd_git_repo
+https://github.boki.moe/github.com/term_sd_git_user/term_sd_git_repo
+https://github.moeyy.xyz/https://github.com/term_sd_git_user/term_sd_git_repo
+https://gh-proxy.net/https://github.com/term_sd_git_user/term_sd_git_repo
+https://gh-proxy.ygxz.in/https://github.com/term_sd_git_user/term_sd_git_repo
+https://wget.la/https://github.com/term_sd_git_user/term_sd_git_repo
+https://kkgithub.com/term_sd_git_user/term_sd_git_repo
+EOF
+}
+
+
 main() {
     cd "$(cd "$(dirname "$0")" ; pwd)"
 
@@ -73,16 +95,7 @@ main() {
     local count=0
     local available
 
-    github_mirror_list="\
-        https://ghfast.top/https://github.com/term_sd_git_user/term_sd_git_repo \
-        https://mirror.ghproxy.com/https://github.com/term_sd_git_user/term_sd_git_repo \
-        https://ghproxy.net/https://github.com/term_sd_git_user/term_sd_git_repo \
-        https://gh.api.99988866.xyz/https://github.com/term_sd_git_user/term_sd_git_repo \
-        https://gh-proxy.com/https://github.com/term_sd_git_user/term_sd_git_repo \
-        https://ghps.cc/https://github.com/term_sd_git_user/term_sd_git_repo \
-        https://gh.idayer.com/https://github.com/term_sd_git_user/term_sd_git_repo \
-        https://gitclone.com/github.com/term_sd_git_user/term_sd_git_repo \
-    "
+    github_mirror_list=$(get_github_mirror_list)
 
     for mirror_url in $github_mirror_list; do
         name=$(get_github_mirror_name "${mirror_url}")

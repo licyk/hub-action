@@ -13,15 +13,10 @@ jobs:
     Test-HuggingFace-Mirror:
         runs-on: ubuntu-latest
         steps:
-
         - uses: actions/checkout@v4
-        - name: Go to WorkSpace
-          run: |
-            cd "${{ github.workspace }}"
-
         - name: Test Avaliable HuggingFace Mirror
           shell: bash
           env:
             GITHUB_TOKEN: ${{ github.token }}
           run: |
-            bash ./scripts/test_huggingface_mirror.sh
+            bash ""${{ github.workspace }}/scripts/test_huggingface_mirror.sh"
