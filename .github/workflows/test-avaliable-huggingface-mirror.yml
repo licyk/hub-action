@@ -19,4 +19,4 @@ jobs:
           env:
             GITHUB_TOKEN: ${{ github.token }}
           run: |
-            bash ""${{ github.workspace }}/scripts/test_huggingface_mirror.sh"
+            bash "${{ github.workspace }}/scripts/test_huggingface_mirror.sh"
