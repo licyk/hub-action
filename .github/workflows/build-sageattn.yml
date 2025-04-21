@@ -37,7 +37,8 @@ on:
 
 jobs:
   build-sageattn:
-    runs-on: windows-large
+    # runs-on: windows-large
+    runs-on: windows-latest
     steps:
       - uses: actions/setup-python@v5
         with:
