@@ -1,13 +1,14 @@
 name: List HuggingFace Repo
 
 on: 
-    schedule:
-    # * 是一个特殊字符在 YAML 中，所以你需要引用这个字符串
-    # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
-    - cron: '0 16 * * *' # 每日24点进行同步
-    push:
-    delete:
-    create:
+  schedule:
+  # * 是一个特殊字符在 YAML 中，所以你需要引用这个字符串
+  # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
+  - cron: '0 16 * * *' # 每日24点进行同步
+  push:
+  delete:
+  create:
+  workflow_dispatch:
 
 
 jobs:

@@ -7,12 +7,6 @@ on:
   delete:
   create:
   workflow_dispatch:
-    inputs:
-      pytorch_version:
-        description: Test
-        required: true
-        type: string
-        default: main-windows
 
 jobs:
   Build-SD-Protable-Download-Link:
