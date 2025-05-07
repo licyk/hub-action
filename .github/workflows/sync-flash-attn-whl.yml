@@ -1,0 +1,35 @@
+name: Sync Flash Attn Wheel
+
+on: 
+    schedule:
+    # * 是一个特殊字符在 YAML 中，所以你需要引用这个字符串
+    # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
+    - cron: '5 16 * * *' # 每日24点进行同步
+    push:
+    delete:
+    create:
+    workflow_dispatch:
+
+jobs:
+  Sync-Flash-Attn-Wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: List files in the repository
+        run: |
+          ls "${{ github.workspace }}"
+
+      - name: Config HuggingFace Python Library
+        shell: bash
+        run: |
+          pip install huggingface_hub modelscope requests --break-system-package
+
+      - name: Sync flash_attn wheel to repository
+        shell: bash
+        env:
+          root_path: ${{ github.workspace }}/artifact
+          HF_TOKEN: ${{ secrets.HF_TOKEN }
+          MODELSCOPE_API_TOKEN: ${{ secrets.MODELSCOPE_API_TOKEN }}
+        run: |
+          python "${{ github.workspace }}/scripts/sync_flash_attn_whl.py"
+
