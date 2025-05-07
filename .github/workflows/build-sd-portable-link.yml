@@ -3,9 +3,9 @@ name: Build SD Protable Download Link
 on: 
   schedule:
   - cron: '0 22 * * *'
-  push:
-  delete:
-  create:
+  # push:
+  # delete:
+  # create:
   workflow_dispatch:
 
 jobs:
