@@ -201,7 +201,7 @@ def load_file_from_url(
     if re_download or not os.path.exists(cached_file):
         os.makedirs(model_dir, exist_ok=True)
         temp_file = os.path.join(model_dir, f"{file_name}.tmp")
-        print(f'\nDownloading: "{url}" to {cached_file}')
+        print(f'Downloading: "{url}" to {cached_file}')
         response = requests.get(url, stream=True)
         response.raise_for_status()
         total_size = int(response.headers.get('content-length', 0))
@@ -213,8 +213,10 @@ def load_file_from_url(
                         progress_bar.update(len(chunk))
 
         if hash_prefix and not compare_sha256(temp_file, hash_prefix):
-            print(f"Hash mismatch for {
-                  temp_file}. Deleting the temporary file.")
+            print(
+                "Hash mismatch for %s. Deleting the temporary file.",
+                temp_file
+            )
             os.remove(temp_file)
             raise ValueError(
                 f"File hash does not match the expected hash prefix {hash_prefix}!")
@@ -293,9 +295,11 @@ def sync_file_to_repo(
                     commit_message=f"Upload {file}",
                     token=os.environ.get("MODELSCOPE_API_TOKEN", None)
                 )
-            os.remove(file_in_local_path)
         except Exception as e:
-            print(f"上传 / 下载 {file} 时发生了错误, {e}")
+            print(f"上传 / 下载 {file} 时发生了错误: {e}")
+        finally:
+            if os.path.exists(file_in_local_path):
+                os.remove(file_in_local_path)
 
     print("同步文件完成")
 
