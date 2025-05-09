@@ -245,9 +245,14 @@ def sync_file_to_repo(
     hf_repo_type: str,
     ms_repo_id: str,
     ms_repo_type: str
-):
+) -> None:
     from huggingface_hub import HfApi, CommitOperationAdd
     from modelscope.hub.api import HubApi
+
+    if len(download_tasks) == 0:
+        print("无上传任务")
+        return
+
     hf_api = HfApi()
     ms_api = HubApi()
     download_path = os.path.join(root_path, prefix)
@@ -270,7 +275,7 @@ def sync_file_to_repo(
 
             if not in_hf:
                 print(
-                    f"[{task_count}/{task_sum}] 上传 {file} 到 {hf_repo_id} (类型: {hf_repo_type}) 中")
+                    f"[{task_count}/{task_sum}] 上传 {file} 到 HuggingFace:{hf_repo_id} (类型: {hf_repo_type}) 中")
                 hf_api.create_commit(
                     repo_id=hf_repo_id,
                     repo_type=hf_repo_type,
@@ -286,7 +291,7 @@ def sync_file_to_repo(
 
             if not in_ms:
                 print(
-                    f"[{task_count}/{task_sum}] 上传 {file} 到 {ms_repo_id} (类型: {ms_repo_type}) 中")
+                    f"[{task_count}/{task_sum}] 上传 {file} 到 ModelScope:{ms_repo_id} (类型: {ms_repo_type}) 中")
                 ms_api.upload_file(
                     repo_id=ms_repo_id,
                     repo_type=ms_repo_type,
@@ -301,7 +306,7 @@ def sync_file_to_repo(
             if os.path.exists(file_in_local_path):
                 os.remove(file_in_local_path)
 
-    print("同步文件完成")
+    print(f"[{task_count}/{task_sum}] 同步文件完成")
 
 
 def main() -> None:
@@ -351,6 +356,9 @@ def main() -> None:
         ms_file_list=ms_file_flash_attn,
         prefix="flash_attn"
     )
+    print(f"flash_attn wheel 源仓库文件数量: {len(gh_file_flash_attn)}")
+    print(f"flash_attn wheel 镜像仓库 (HuggingFace) 文件数量: {len(hf_file_flash_attn)}")
+    print(f"flash_attn wheel 镜像仓库 (ModelScope) 文件数量: {len(ms_file_flash_attn)}")
     sync_file_to_repo(
         download_tasks=download_tasks,
         prefix="flash_attn",
