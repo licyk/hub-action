@@ -90,14 +90,6 @@ jobs:
                   source-repo: git@github.com:licyk/t.git
                   destination-repo: git@gitee.com:licyk/tt.git
 
-            - name: Sync sd-workflow to Gitee
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/sd-workflow.git
-                  destination-repo: git@gitee.com:licyk/sd-workflow.git
-
             - name: Sync advanced_euler_sampler_extension to Gitee
               uses: wearerequired/git-mirror-action@master
               env:

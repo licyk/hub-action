@@ -90,14 +90,6 @@ jobs:
                   source-repo: git@github.com:licyk/t.git
                   destination-repo: git@gitlab.com:licyk/t.git
 
-            - name: Sync sd-workflow to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/sd-workflow.git
-                  destination-repo: git@gitlab.com:licyk/sd-workflow.git
-
             - name: Sync advanced_euler_sampler_extension to Gitlab
               uses: wearerequired/git-mirror-action@master
               env:
