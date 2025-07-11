@@ -340,7 +340,6 @@ def main() -> None:
     )
     ms_file = filter_portable_file(ms_file)
     stable, nightly = find_latest_package(ms_file)
-    root_path = os.environ.get("root_path", os.getcwd())
 
     for portable_type, file_path, url in stable:
         filename = os.path.basename(file_path)

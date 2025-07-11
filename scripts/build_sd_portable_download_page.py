@@ -326,7 +326,7 @@ def main() -> None:
     html_string_nightly = build_download_page_list(nightly)
 
     current_time = (
-        datetime.now(timezone.utc)+ timedelta(hours=8)
+        datetime.now(timezone.utc) + timedelta(hours=8)
     ).strftime(r"%Y-%m-%d %H:%M:%S")
 
     content_s = """
@@ -380,8 +380,8 @@ def main() -> None:
         + content_e.strip().split("\n")
     )
 
-    write_content_to_file(package_list_html, os.path.join(root_path, "index.html"))
-
+    write_content_to_file(
+        package_list_html, os.path.join(root_path, "index.html"))
 
 
 if __name__ == "__main__":
