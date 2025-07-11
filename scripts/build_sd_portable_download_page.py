@@ -269,49 +269,29 @@ def classify_package(
     return stable_portable, nightly_portable
 
 
+# 整合包别名
+PROTABLE_ALIAS = {
+    "sd_webui": "Stable Diffusion WebUI",
+    "sd_webui_forge": "Stable Diffusion WebUI Forge",
+    "sd_webui_reforge": "Stable Diffusion WebUI reForge",
+    "sd_webui_forge_classic": "Stable Diffusion WebUI Forge Classic",
+    "sd_next": "SD Next",
+    "comfyui": "ComfyUI",
+    "fooocus": "Fooocus",
+    "invokeai": "InvokeAI",
+    "sd_trainer": "SD Trainer",
+    "kohya_gui": "Kohya GUI",
+    "sd_scripts": "SD Scripts",
+    "musubi_tuner": "Musubi Tuner",
+}
+
 def replace_package_name(name: str) -> str:
     '''替换原有整合包名
 
     :param name`(str)`: 整合包名
     :return `str`: 替换后的整合包名
     '''
-    if name == "sd_webui":
-        return "Stable Diffusion WebUI"
-
-    if name == "sd_webui_forge":
-        return "Stable Diffusion WebUI Forge"
-
-    if name == "sd_webui_reforge":
-        return "Stable Diffusion WebUI reForge"
-
-    if name == "sd_webui_forge_classic":
-        return "Stable Diffusion WebUI Forge Classic"
-
-    if name == "sd_next":
-        return "SD Next"
-
-    if name == "comfyui":
-        return "ComfyUI"
-
-    if name == "fooocus":
-        return "Fooocus"
-
-    if name == "invokeai":
-        return "InvokeAI"
-
-    if name == "sd_trainer":
-        return "SD Trainer"
-
-    if name == "kohya_gui":
-        return "Kohya GUI"
-
-    if name == "sd_scripts":
-        return "SD Scripts"
-
-    if name == "musubi_tuner":
-        return "Musubi Tuner"
-
-    return name
+    return PROTABLE_ALIAS.get(name, name)
 
 
 def main() -> None:
