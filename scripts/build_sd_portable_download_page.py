@@ -1,16 +1,100 @@
 import os
-import modelscope
-from typing import Union
+import re
+from collections import namedtuple
+from typing import Union, Literal
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
+from modelscope.hub.api import HubApi, DEFAULT_DATASET_REVISION
+from modelscope.hub.snapshot_download import fetch_repo_files
 
 
+# 解析整合包文件名的正则表达式
+PORTABLE_NAME_PATTERN = r'''
+    ^
+    (?P<software>[\w_]+?)       # 软件名 (允许下划线)
+    -                           
+    (?P<signature>[a-z0-9]+)    # 署名 (小写字母 + 数字)
+    -                           
+    (?:
+        # 每日构建模式：日期 + nightly
+        (?P<build_date>\d{8})   # 构建日期 (YYYYMMDD)
+        -
+        nightly                 
+    |
+        # 正式版本模式：v + 版本号
+        v
+        (?P<version>[\d.]+)     # 版本号 (数字和点)
+    )
+    \.
+    (?P<extension>[a-z0-9]+(?:\.[a-z0-9]+)?)  # 扩展名 (支持多级扩展)
+    $
+'''
 
-def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
-    api = modelscope.HubApi()
-    from modelscope.hub.snapshot_download import fetch_repo_files
-    from modelscope.hub.api import DEFAULT_DATASET_REVISION
 
+# 编译正则表达式 (忽略大小写, 详细模式)
+portable_name_parse_regex = re.compile(
+    PORTABLE_NAME_PATTERN,
+    re.VERBOSE | re.IGNORECASE
+)
+
+# 定义文件名组件的命名元组
+PortableNameComponent = namedtuple(
+    'PortableNameComponent', [
+        'software',     # 软件名称
+        'signature',    # 署名标记
+        'build_type',   # 构建类型 (nightly/stable)
+        'build_date',   # 构建日期 (仅 nightly 有效)
+        'version',      # 版本号 (仅 stable 有效)
+        'extension'     # 文件扩展名
+    ]
+)
+
+
+def parse_portable_filename(filename: str) -> PortableNameComponent:
+    """
+    解析文件名并返回结构化数据
+
+    :param filename: 要解析的文件名
+    :return: PortableNameComponent 命名元组
+    :raises ValueError: 当文件名不符合模式时
+    """
+    match = portable_name_parse_regex.match(filename)
+    if not match:
+        raise ValueError(f"Invalid filename format: {filename}")
+
+    groups = match.groupdict()
+
+    # 确定构建类型并提取相应字段
+    if groups['build_date']:
+        build_type = 'nightly'
+        build_date = groups['build_date']
+        version = None
+    else:
+        build_type = 'stable'
+        build_date = None
+        version = groups['version']
+
+    return PortableNameComponent(
+        software=groups['software'],
+        signature=groups['signature'],
+        build_type=build_type,
+        build_date=build_date,
+        version=version,
+        extension=groups['extension'].lower()
+    )
+
+
+def get_modelscope_repo_file(
+    repo_id: str,
+    repo_type: Literal["model", "dataset", "space"],
+) -> list[str, str]:
+    '''从 ModelScope 仓库获取文件列表
+
+    :param repo_id`(str)`: 仓库 ID
+    :param repo_type`(str)`: 仓库种类 (model/dataset/space)
+    :return `list[str,str]`: 仓库文件列表 `[<路径>, <链接>]`
+    '''
+    api = HubApi()
     file_list = []
     file_list_url = []
 
@@ -38,6 +122,7 @@ def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
                 group_or_owner=user,
                 name=name,
                 revision=DEFAULT_DATASET_REVISION,
+                endpoint=api.endpoint
             )
             file_list = _get_file_path(repo_files)
         except Exception as e:
@@ -64,27 +149,44 @@ def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
     return file_list_url
 
 
-def build_download_page_list(package_list: list) -> list:
+def build_download_page_list(package_list: list[str, str, str]) -> list[str]:
+    '''构建下载页面
+
+    :param package_list`(list[str,str,str])`: 整合包列表 `[<整合包名>, <路径>, <链接>]`
+    :return `list[str]`: HTML 页面内容
+    '''
     html_string = []
+    p_type_list = list(set([x for x, _, _ in package_list]))
+    p_type_list.sort()
+
     html_string.append("<ul>")
-    for p_type, pkg_list in package_list:
+
+    for p_type in p_type_list:
         html_string.append(f"<li>{replace_package_name(p_type)}</li>")
-        html_string.append("<ul>")
-        for p_path, url in pkg_list:
+        for origin_p_type, p_path, url in package_list:
+            if origin_p_type != p_type:
+                continue
+
+            html_string.append("<ul>")
             filename = os.path.basename(p_path)
             tmp = f"""
-<li><a href="{url}">
+    <li><a href="{url}">
     {filename}
-</a></li>
+    </a></li>
             """
             html_string.append(tmp)
-        html_string.append("</ul>")
+            html_string.append("</ul>")
     html_string.append("</ul>")
 
     return html_string
 
 
 def write_content_to_file(content: list, path: Union[str, Path]) -> None:
+    '''将列表写入文件中
+
+    :param content`(list)`: 列表内容
+    :param path`(Union[str,Path])`: 保存路径
+    '''
     if len(content) == 0:
         return
 
@@ -99,51 +201,80 @@ def write_content_to_file(content: list, path: Union[str, Path]) -> None:
             f.write(item + "\n")
 
 
-def filter_portable_file(file_list: list) -> list:
+def filter_portable_file(file_list: list[str, str]) -> list[str, str]:
+    '''从仓库列表中筛选出整合包列表
+
+    :param file_list`(list[str,str])`: 仓库文件列表 `[<路径>, <链接>]`
+    :return `(list[str,str])`: 整合包文件列表 `[<路径>, <链接>]`
+    '''
     fitter_file_list = []
     for file, url in file_list:
-        if file.startswith("portable/") and file.endswith(".7z"):
-            fitter_file_list.append([file, url])
+        filename = os.path.basename(file)
+        if file.startswith("portable/"):
+            try:
+                _ = parse_portable_filename(filename)
+                fitter_file_list.append([file, url])
+            except Exception as e:
+                print(f"{file} 文件名不符合规范: {e}")
 
     return fitter_file_list
 
 
-def split_release_list(file_list: list) -> Union[list, list]:
-    stable_list = []
-    nightly_list = []
-    for file, url in file_list:
-        if file.startswith("portable/stable"):
-            stable_list.append([file, url])
+def classify_package(
+    package_list: list[str, str]
+) -> tuple[list[str, str, str], list[str, str, str]]:
+    '''分类整合包列表
 
-    for file, url in file_list:
-        if file.startswith("portable/nightly"):
-            nightly_list.append([file, url])
+    :param package_list`(list[str,str])`: 整合包列表 `[<路径>, <链接>]`
+    :return `tuple[list[str,str,str],list[str,str,str]]`: 整合包列表
 
-    return stable_list, nightly_list
-
-
-def classify_package(package_list: list) -> list:
+    整合包列表为 `[<稳定版整合包名>, <路径>, <链接>], [<每日构建版整合包名>, <路径>, <链接>]`
+    '''
     portable_type = set()
-    file_list = []
+    stable_portable = []
+    nightly_portable = []
 
-    for a, b in package_list:
-        portable_type.add(os.path.basename(a).split("_licyk_")[0])
+    # 提取所有整合包的名字
+    for file, _ in package_list:
+        filename = os.path.basename(file)
+        portable_type.add(parse_portable_filename(filename).software)
 
     portable_type = sorted(list(portable_type))
 
+    # 根据整合包名字分组
     for p_type in portable_type:
         tmp = []
-        for a, b in package_list:
-            filename = os.path.basename(a)
-            if filename.startswith(f"{p_type}_licyk_"):
-                tmp.append([a, b])
 
-        file_list.append([p_type, tmp])
+        # 筛选出同一个类型的整合包
+        for file, url in package_list:
+            filename = os.path.basename(file)
+            portable = parse_portable_filename(filename)
+            if portable.software == p_type:
+                tmp.append([file, url])
 
-    return file_list
+        # 分出 stable 版
+        for file, url in tmp:
+            filename = os.path.basename(file)
+            portable = parse_portable_filename(filename)
+            if portable.build_type == "stable":
+                stable_portable.append([p_type, file, url])
+
+        # 分出 nightly 版
+        for file, url in tmp:
+            filename = os.path.basename(file)
+            portable = parse_portable_filename(filename)
+            if portable.build_type == "nightly":
+                nightly_portable.append([p_type, file, url])
+
+    return stable_portable, nightly_portable
 
 
 def replace_package_name(name: str) -> str:
+    '''替换原有整合包名
+
+    :param name`(str)`: 整合包名
+    :return `str`: 替换后的整合包名
+    '''
     if name == "sd_webui":
         return "Stable Diffusion WebUI"
 
@@ -184,17 +315,19 @@ def replace_package_name(name: str) -> str:
 
 
 def main() -> None:
-    ms_file = get_modelscope_repo_file(repo_id="licyks/sdnote", repo_type="model")
+    '''主函数'''
+    root_path = os.environ.get("ROOT_PATH")
+    repo_id = os.environ.get("REPO_ID")
+    repo_type = os.environ.get("REPO_TYPE")
+    ms_file = get_modelscope_repo_file(repo_id=repo_id, repo_type=repo_type)
     ms_file = filter_portable_file(ms_file)
-    stable, nightly = split_release_list(ms_file)
-    stable = classify_package(stable)
-    nightly = classify_package(nightly)
+    stable, nightly = classify_package(ms_file)
     html_string_stable = build_download_page_list(stable)
     html_string_nightly = build_download_page_list(nightly)
 
     current_time = (
         datetime.now(timezone.utc)+ timedelta(hours=8)
-    ).strftime("%Y-%m-%d %H:%M:%S")
+    ).strftime(r"%Y-%m-%d %H:%M:%S")
 
     content_s = """
 <!DOCTYPE html>
@@ -246,7 +379,6 @@ def main() -> None:
         + html_string_nightly
         + content_e.strip().split("\n")
     )
-    root_path = os.environ.get("root_path", os.getcwd())
 
     write_content_to_file(package_list_html, os.path.join(root_path, "index.html"))
 
