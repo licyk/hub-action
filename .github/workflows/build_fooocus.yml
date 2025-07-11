@@ -22,5 +22,5 @@ jobs:
         shell: pwsh
         run: |
           Get-ChildItem -Path "${{ github.workspace }}" -Recurse
-          Write-Host $ENV:PATH.Split(';')
+          foreach ($i in $ENV:PATH.Split(';')) { Write-Host "bin: $i" }
       
