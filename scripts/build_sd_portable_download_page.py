@@ -304,6 +304,11 @@ def save_list_to_json(save_path: Path | str, origin_list: list) -> bool:
     :param origin_list`(list)`: 要保存的列表
     :return `bool`: 当文件保存成功时返回`True`
     """
+    dir_path = os.path.dirname(save_path)
+
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path, exist_ok=True)
+
     try:
         with open(save_path, 'w', encoding='utf-8') as f:
             json.dump(
