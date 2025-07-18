@@ -15,6 +15,10 @@
 |Build SD Protable Download Page|[![Build SD Protable Download Page](https://github.com/licyk/hub-action/actions/workflows/build-sd-portable-download-pages.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sd-portable-download-pages.yml)|
 |Build SD Protable Download Link|[![Build SD Protable Download Link](https://github.com/licyk/hub-action/actions/workflows/build-sd-portable-link.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sd-portable-link.yml)|
 |Sync Flash Attn Wheel|[![Sync Flash Attn Wheel](https://github.com/licyk/hub-action/actions/workflows/sync-flash-attn-whl.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-flash-attn-whl.yml)|
+|Sync HuggingFace Repo To ModelScope|[![Sync HuggingFace Repo To ModelScope](https://github.com/licyk/hub-action/actions/workflows/sync-hf-to-ms.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-hf-to-ms.yml)|
+|Build SageAttention|[![Build SageAttention](https://github.com/licyk/hub-action/actions/workflows/build-sageattn.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sageattn.yml)|
+|Build Triton|[![Build Triton](https://github.com/licyk/hub-action/actions/workflows/build-triton.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-triton.yml)|
+
 
 ## 使用教程
 
