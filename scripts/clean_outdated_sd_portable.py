@@ -320,7 +320,7 @@ def main() -> None:
 
     if hf_token and hf_repo_id:
         print(f"清理 HuggingFace 仓库 {hf_repo_id} 中的过期整合包")
-        hf_api = HfApi()
+        hf_api = HfApi(token=hf_token)
         hf_repo_files = get_repo_file(hf_api, hf_repo_id, hf_repo_type)
         _, hf_nightly_portable = fitter_portable_list(hf_repo_files)
         hf_outdated_portable = get_outdated_portable(
