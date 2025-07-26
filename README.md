@@ -18,6 +18,7 @@
 |Sync HuggingFace Repo To ModelScope|[![Sync HuggingFace Repo To ModelScope](https://github.com/licyk/hub-action/actions/workflows/sync-hf-to-ms.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-hf-to-ms.yml)|
 |Build SageAttention|[![Build SageAttention](https://github.com/licyk/hub-action/actions/workflows/build-sageattn.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sageattn.yml)|
 |Build Triton|[![Build Triton](https://github.com/licyk/hub-action/actions/workflows/build-triton.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-triton.yml)|
+|Clean Outdated SD Portable|[![Clean Outdated SD Portable](https://github.com/licyk/hub-action/actions/workflows/clean-outdated-sd-portable.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/clean-outdated-sd-portable.yml)|
 
 
 ## 使用教程

@@ -279,7 +279,7 @@ def remove_files_from_hf_repo(
             f"从 HuggingFace 仓库 {repo_id} (类型: {repo_type}) 清理过期整合包时发送了错误: {e}")
 
 
-def remove_file_from_ms_repo(
+def remove_files_from_ms_repo(
     api: HubApi,
     repo_id: str,
     repo_type: MSRepoType,
@@ -327,12 +327,16 @@ def main() -> None:
             file_list=hf_nightly_portable,
             day_threshold=day_threshold
         )
-        remove_files_from_hf_repo(
-            api=hf_api,
-            repo_id=hf_repo_id,
-            repo_type=hf_repo_type,
-            file_list=hf_outdated_portable
-        )
+        if len(hf_outdated_portable) != 0:
+            print(f"HuggingFace 仓库 {hf_repo_id} 中的过期整合包")
+            for i in hf_outdated_portable:
+                print(f"- {i}")
+            remove_files_from_hf_repo(
+                api=hf_api,
+                repo_id=hf_repo_id,
+                repo_type=hf_repo_type,
+                file_list=hf_outdated_portable
+            )
 
     if ms_token and ms_repo_id:
         print(f"清理 ModelScope 仓库 {ms_repo_id} 中的过期整合包")
@@ -344,12 +348,16 @@ def main() -> None:
             file_list=ms_nightly_portable,
             day_threshold=day_threshold
         )
-        remove_file_from_ms_repo(
-            api=ms_api,
-            repo_id=ms_repo_id,
-            repo_type=ms_repo_type,
-            file_list=ms_outdated_portable
-        )
+        if len(ms_outdated_portable) != 0:
+            print(f"ModelScope 仓库 {ms_repo_id} 中的过期整合包")
+            for i in ms_outdated_portable:
+                print(f"- {i}")
+            remove_files_from_ms_repo(
+                api=ms_api,
+                repo_id=ms_repo_id,
+                repo_type=ms_repo_type,
+                file_list=ms_outdated_portable
+            )
 
     print("清理过期整合包完成")
 
