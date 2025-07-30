@@ -25,6 +25,11 @@ on:
                 required: true
                 type: string
                 default: model
+            ms_repo_path:
+                description: 上传到 ModelScope 仓库的指定路径
+                required: true
+                type: string
+                default: .
 
 jobs:
     Sync-HF-To-MS:
@@ -55,5 +60,5 @@ jobs:
 
                 echo "上传 ${{ github.workspace }} 到 ModelScope 仓库 ${{ inputs.ms_repo_id }} (类型: ${{ inputs.ms_repo_type }})"
                 modelscope login --token "${{secrets.MODELSCOPE_API_TOKEN }}" &> /dev/null
-                modelscope upload "${{ inputs.ms_repo_id }}" "${{ github.workspace }}" . --repo-type "${{ inputs.ms_repo_type }}"
+                modelscope upload "${{ inputs.ms_repo_id }}" "${{ github.workspace }}" "${{ github.ms_repo_path }}" --repo-type "${{ inputs.ms_repo_type }}"
                 echo "上传仓库完成"
