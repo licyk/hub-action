@@ -19,6 +19,7 @@
 |Build SageAttention|[![Build SageAttention](https://github.com/licyk/hub-action/actions/workflows/build-sageattn.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sageattn.yml)|
 |Build Triton|[![Build Triton](https://github.com/licyk/hub-action/actions/workflows/build-triton.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-triton.yml)|
 |Clean Outdated SD Portable|[![Clean Outdated SD Portable](https://github.com/licyk/hub-action/actions/workflows/clean-outdated-sd-portable.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/clean-outdated-sd-portable.yml)|
+|Clean HuggingFace Repo Space|[![Clean HuggingFace Repo Space](https://github.com/licyk/hub-action/actions/workflows/clean-hf-repo.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/clean-hf-repo.yml)|
 
 
 ## 使用教程
