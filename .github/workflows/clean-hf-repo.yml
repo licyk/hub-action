@@ -43,8 +43,8 @@ jobs:
                 from huggingface_hub import super_squash_history
 
                 super_squash_history(
-                    repo_id=os.getenv("HF_REPO_ID", "licyk/sdnote"),
-                    repo_type=os.getenv("HF_REPO_TYPE", None),
-                    branch=os.getenv("HF_REPO_BRANCH", None),
-                    token=os.getenv("HF_TOKEN", None),
+                    repo_id=os.getenv("HF_REPO_ID"),
+                    repo_type=os.getenv("HF_REPO_TYPE") or None,
+                    branch=os.getenv("HF_REPO_BRANCH") or None,
+                    token=os.getenv("HF_TOKEN") or None,
                 )
