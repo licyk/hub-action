@@ -32,7 +32,7 @@ jobs:
                 pip install "huggingface_hub[cli]" --break-system-package
 
             - name: Sync HuggingFace Repo To ModelScope Repo
-              shell: bash
+              shell: python
               env:
                 HF_TOKEN: ${{ secrets.HF_TOKEN }}
                 HF_REPO_ID: ${{ inputs.hf_repo_id }}
