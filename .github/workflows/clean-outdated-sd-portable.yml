@@ -32,6 +32,6 @@ jobs:
           HF_REPO_TYPE: model
           MS_REPO_ID: licyks/sdnote
           MS_REPO_TYPE: model
-          DAY_THRESHOLD: 60
+          DAY_THRESHOLD: 30
         run: |
           python "${{ github.workspace }}/scripts/clean_outdated_sd_portable.py"

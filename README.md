@@ -1,8 +1,8 @@
 # hub-action
-使用 [git-mirror-action](https://github.com/wearerequired/git-mirror-action) 进行同步
+Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/hub-action/tree/main/tools) 目录
+
 
 ## 当前状态
-
 |Github Action|Status|
 |---|---|
 |Github -> Gitee|[![Sync To Gitee](https://github.com/licyk/hub-action/actions/workflows/sync-to-gitee.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-to-gitee.yml)|
@@ -22,7 +22,8 @@
 |Clean HuggingFace Repo Space|[![Clean HuggingFace Repo Space](https://github.com/licyk/hub-action/actions/workflows/clean-hf-repo.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/clean-hf-repo.yml)|
 
 
-## 使用教程
+## 同步仓库教程
+使用 [git-mirror-action](https://github.com/wearerequired/git-mirror-action) 进行同步
 
 ### 1、生成 SSH 公钥
 

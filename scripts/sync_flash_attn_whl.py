@@ -1,15 +1,22 @@
 import os
 import requests
-import modelscope
-import huggingface_hub
 from enum import Enum
-from typing import Union
+from typing import Union, Literal
 from pathlib import Path
+from huggingface_hub import HfApi
+from modelscope import HubApi
 
 
 class ListType(int, Enum):
     single = 1
     multiple = 2
+
+
+# HuggingFace 仓库类型
+HFRepoType = Literal["model", "dataset", "space"]
+
+# ModelScope 仓库类型
+MSRepoType = Literal["model", "dataset", "space"]
 
 
 def get_github_release_file(repo: str) -> list:
@@ -34,69 +41,101 @@ def get_github_release_file(repo: str) -> list:
     return file_list
 
 
-def get_huggingface_repo_file(repo_id: str, repo_type: str) -> list:
-    api = huggingface_hub.HfApi()
-    repo_files = []
+def get_repo_file(
+    api: HfApi | HubApi,
+    repo_id: str,
+    repo_type: HFRepoType = "model",
+) -> list[str]:
+    """获取 HuggingFace / ModelScope 仓库文件列表
 
+    :param api`(HfApi|HubApi)`: HuggingFace / ModelScope Api 实例
+    :param repo_id`(str)`: HuggingFace / ModelScope 仓库 ID
+    :param repo_type`(str)`: HuggingFace / ModelScope 仓库类型
+    :return `list[str]`: 仓库文件列表
+    """
+    if isinstance(api, HfApi):
+        print(f"获取 HuggingFace 仓库 {repo_id} (类型: {repo_type}) 的文件列表")
+        return get_hf_repo_files(api, repo_id, repo_type)
+    if isinstance(api, HubApi):
+        print(f"获取 ModelScope 仓库 {repo_id} (类型: {repo_type}) 的文件列表")
+        return get_ms_repo_files(api, repo_id, repo_type)
+
+    print(f"未知 Api 类型: {api}")
+    return []
+
+
+def get_hf_repo_files(
+    api: HfApi,
+    repo_id: str,
+    repo_type: HFRepoType,
+) -> list[str]:
+    """获取 HuggingFace 仓库文件列表
+
+    :param api`(HfApi)`: HuggingFace Api 实例
+    :param repo_id`(str)`: HuggingFace 仓库 ID
+    :param repo_type`(str)`: HuggingFace 仓库类型
+    :return `list[str]`: 仓库文件列表
+    """
     try:
-        print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表")
-        repo_files = api.list_repo_files(
+        return api.list_repo_files(
             repo_id=repo_id,
             repo_type=repo_type,
         )
-    except Exception as e:
-        print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表出现错误: {e}")
+    except (ValueError, ConnectionError, TypeError) as e:
+        print(f"获取 {repo_id} (类型: {repo_type}) 仓库的文件列表出现错误: {e}")
+        return []
 
-    return repo_files
 
+def get_ms_repo_files(
+    api: HubApi,
+    repo_id: str,
+    repo_type: MSRepoType = "model",
+) -> list[str]:
+    """ 获取 ModelScope 仓库文件列表
 
-def get_modelscope_repo_file(repo_id: str, repo_type: str) -> list:
-    api = modelscope.HubApi()
-    from modelscope.hub.snapshot_download import fetch_repo_files
-    from modelscope.hub.api import DEFAULT_DATASET_REVISION
-
+    :param api`(HfApi)`: ModelScope Api 实例
+    :param repo_id`(str)`: ModelScope 仓库 ID
+    :param repo_type`(str)`: ModelScope 仓库类型
+    :return `list[str]`: 仓库文件列表
+    """
     file_list = []
 
-    def _get_file_path(repo_files: list) -> list:
-        file_list = []
-        for file in repo_files:
-            if file['Type'] != 'tree':
-                file_list.append(file["Path"])
-        return file_list
+    def _get_file_path(repo_files: list) -> list[str]:
+        """获取 ModelScope Api 返回的仓库列表中的模型路径"""
+        return [
+            file["Path"]
+            for file in repo_files
+            if file['Type'] != 'tree'
+        ]
 
     if repo_type == "model":
         try:
-            print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表")
             repo_files = api.get_model_files(
                 model_id=repo_id,
                 recursive=True
             )
             file_list = _get_file_path(repo_files)
-        except Exception as e:
+        except (ValueError, ConnectionError, TypeError) as e:
             print(f"获取 {repo_id} (类型: {repo_type}) 仓库的文件列表出现错误: {e}")
     elif repo_type == "dataset":
-        user, name = repo_id.split("/")
         try:
-            print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表")
-            repo_files = fetch_repo_files(
-                _api=api,
-                group_or_owner=user,
-                name=name,
-                revision=DEFAULT_DATASET_REVISION
+            repo_files = api.get_dataset_files(
+                repo_id=repo_id,
+                recursive=True
             )
             file_list = _get_file_path(repo_files)
-        except Exception as e:
+        except (ValueError, ConnectionError, TypeError) as e:
             print(f"获取 {repo_id} (类型: {repo_type}) 仓库的文件列表出现错误: {e}")
     elif repo_type == "space":
         # TODO: 支持创空间
         print(f"{repo_id} 仓库类型为创空间, 不支持获取文件列表")
     else:
-        raise Exception(f"未知的 {repo_type} 仓库类型")
+        print(f"未知的 {repo_type} 仓库类型")
 
     return file_list
 
 
-def filter_whl_file(file_list: list, list_type: ListType) -> list:
+def filter_whl_file(file_list: list[str], list_type: ListType) -> list[str]:
     fitter_file_list = []
 
     if len(file_list) == 0:
@@ -241,20 +280,17 @@ def sync_file_to_repo(
     download_tasks: list,
     prefix: str,
     root_path: Union[str, Path],
+    hf_api: HfApi,
     hf_repo_id: str,
     hf_repo_type: str,
+    ms_api: HubApi,
     ms_repo_id: str,
     ms_repo_type: str
 ) -> None:
-    from huggingface_hub import HfApi, CommitOperationAdd
-    from modelscope.hub.api import HubApi
-
     if len(download_tasks) == 0:
         print("无上传任务")
         return
 
-    hf_api = HfApi()
-    ms_api = HubApi()
     download_path = os.path.join(root_path, prefix)
     task_sum = len(download_tasks)
     task_count = 0
@@ -276,17 +312,12 @@ def sync_file_to_repo(
             if not in_hf:
                 print(
                     f"[{task_count}/{task_sum}] 上传 {file} 到 HuggingFace:{hf_repo_id} (类型: {hf_repo_type}) 中")
-                hf_api.create_commit(
+                hf_api.upload_file(
                     repo_id=hf_repo_id,
                     repo_type=hf_repo_type,
-                    operations=[
-                        CommitOperationAdd(
-                            path_in_repo=file_in_repo_path,
-                            path_or_fileobj=file_in_local_path
-                        )
-                    ],
+                    path_in_repo=file_in_repo_path,
+                    path_or_fileobj=file_in_local_path,
                     commit_message=f"Upload {file}",
-                    token=os.environ.get("HF_TOKEN", None)
                 )
 
             if not in_ms:
@@ -310,16 +341,21 @@ def sync_file_to_repo(
 
 
 def main() -> None:
+    hf_api = HfApi(token=os.environ.get("HF_TOKEN", None))
+    ms_api = HubApi()
+    ms_api.login(access_token=os.environ.get("MODELSCOPE_API_TOKEN", None))
     gh_file = (
         get_github_release_file("kingbri1/flash-attention")
         +
         get_github_release_file("Dao-AILab/flash-attention")
     )
-    hf_file = get_huggingface_repo_file(
+    hf_file = get_repo_file(
+        api=hf_api,
         repo_id="licyk/wheel",
         repo_type="model"
     )
-    ms_file = get_modelscope_repo_file(
+    ms_file = get_repo_file(
+        api=ms_api,
         repo_id="licyks/wheels",
         repo_type="model"
     )
@@ -362,9 +398,11 @@ def main() -> None:
     sync_file_to_repo(
         download_tasks=download_tasks,
         prefix="flash_attn",
-        root_path=os.environ.get("root_path", os.getcwd()),
+        root_path=os.environ.get("ROOT_PATH", os.getcwd()),
+        hf_api=hf_api,
         hf_repo_id="licyk/wheel",
         hf_repo_type="model",
+        ms_api=ms_api,
         ms_repo_id="licyks/wheels",
         ms_repo_type="model"
     )
