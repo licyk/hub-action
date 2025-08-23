@@ -49,9 +49,9 @@ jobs:
                 echo "下载 HuggingFace 仓库 ${{ inputs.hf_repo_id }} (类型: ${{ inputs.hf_repo_type }}) 到 ${{ github.workspace }}"
                 if [[ ! -z "${{ inputs.hf_file_include }}" ]]; then
                     echo "指定下载 ${{ inputs.hf_file_include }} 中的文件"
-                    huggingface-cli download "${{ inputs.hf_repo_id }}" --repo-type "${{ inputs.hf_repo_type }}" --local-dir "${{ github.workspace }}" --include "${{ inputs.hf_file_include }}"
+                    hf download "${{ inputs.hf_repo_id }}" --repo-type "${{ inputs.hf_repo_type }}" --local-dir "${{ github.workspace }}" --include "${{ inputs.hf_file_include }}"
                 else
-                    huggingface-cli download "${{ inputs.hf_repo_id }}" --repo-type "${{ inputs.hf_repo_type }}" --local-dir "${{ github.workspace }}"
+                    hf download "${{ inputs.hf_repo_id }}" --repo-type "${{ inputs.hf_repo_type }}" --local-dir "${{ github.workspace }}"
                 fi
                 echo "下载仓库完成"
 
