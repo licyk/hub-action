@@ -146,7 +146,10 @@ def get_lora_model_info(html_content: str, base_url: str) -> LoRAModelCards:
                     content = version_cell.decode_contents()
 
                     # 按逗号分割不同的模型版本
-                    model_parts = re.split(r"\s*,\s*", content)
+                    # model_parts = re.split(r"\s*,\s*", content)
+
+                    # 按 <br/> 分割不同的模型版本
+                    model_parts = re.split(r"\s*<br/>\s*", content)
 
                     for part in model_parts:
                         # 对于每个部分，提取模型名称和版本链接
