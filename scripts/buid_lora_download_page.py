@@ -24,10 +24,9 @@ class ModelCard:
     """LoRA 模型卡片信息"""
 
     model_title: str  # 模型标题
-    image_url: str  # 预览图URL
+    preview_img_url: str  # 预览图 URL
     trigger_words: str  # 触发词
-    safetensor_ids: list[str]  # safetensor ID列表
-    model_versions: list[VersionInfo]  # 模型版本信息列表
+    versions_info: list[VersionInfo]  # 模型版本信息列表
 
 
 LoRAModelCards = list[ModelCard]
@@ -171,6 +170,7 @@ def get_lora_model_info(html_content: str, base_url: str) -> LoRAModelCards:
                             )
 
         lora_model_cards[model_title] = {
+            "model_title": model_title,
             "preview_img_url": preview_img_url,
             "trigger_words": trigger_words,
             "versions_info": versions_info,
