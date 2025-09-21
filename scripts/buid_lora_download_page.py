@@ -92,6 +92,9 @@ def get_lora_model_info(html_content: str, base_url: str) -> LoRAModelCards:
                         model_title = lora_cell.get_text(strip=True)
                     break
 
+        if model_title is None:
+            continue
+
         # 找到"预览图"行
         for row in table.find_all("tr"):
             cells = row.find_all("td")
@@ -204,6 +207,7 @@ def save_list_to_json(save_path: Path | str, origin_list: list) -> bool:
 
 
 def main() -> None:
+    """主函数"""
     base_url = os.getenv("BASE_URL", "https://licyk.netlify.app")
     lora_model_url = os.getenv(
         "LORA_MODEL_URL", "https://licyk.netlify.app/2024/10/05/my-sd-model-list"
