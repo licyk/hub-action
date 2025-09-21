@@ -5,6 +5,7 @@ import html
 from urllib.parse import urljoin
 from pathlib import Path
 from dataclasses import dataclass
+from typing import TypedDict
 import requests
 from bs4 import BeautifulSoup
 
@@ -20,7 +21,7 @@ class VersionInfo:
 
 
 @dataclass
-class ModelCard:
+class ModelCard(TypedDict):
     """LoRA 模型卡片信息"""
 
     model_title: str  # 模型标题
