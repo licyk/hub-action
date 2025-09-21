@@ -29,7 +29,7 @@ class ModelCard:
     versions_info: list[VersionInfo]  # 模型版本信息列表
 
 
-LoRAModelCards = list[ModelCard]
+LoRAModelCards = dict[str, ModelCard]
 
 
 def fetch_webpage_content(
