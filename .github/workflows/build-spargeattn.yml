@@ -1,4 +1,4 @@
-name: Build SageAttention
+name: Build SpargeAttention
 
 on:
   workflow_dispatch:
@@ -50,7 +50,7 @@ on:
         default: ''
 
 jobs:
-  build-sageattn:
+  build-spargeattn:
     # runs-on: windows-large
     runs-on: windows-latest
     steps:
@@ -58,18 +58,28 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install MSVC v14.42
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri https://github.com/Data-Oriented-House/PortableBuildTools/releases/download/v2.10.2/PortableBuildTools.exe -OutFile .\PortableBuildTools.exe
+          .\PortableBuildTools.exe accept_license msvc=14.42.17.12 sdk=26100 target=x64 host=x64 env=none path="C:\BuildTools"
+
+      # - uses: ilammy/msvc-dev-cmd@v1
+      #   with:
+      #     toolset: 14.42
+
       - uses: Jimver/cuda-toolkit@v0.2.22
         with:
           cuda: 12.${{ inputs.cuda_minor }}.${{ inputs.cuda_patch }}
           use-github-cache: false
           use-local-cache: false
 
-      - uses: ilammy/msvc-dev-cmd@v1
-
       - name: Build wheel
         shell: powershell
         run: |
-          # Get-ChildItem Env:
+          C:\BuildTools\devcmd.ps1
+
+          Get-ChildItem Env:
           # (Get-WmiObject Win32_Processor).Name
           # (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB
           # (Get-WmiObject Win32_VideoController).Name
@@ -80,8 +90,8 @@ jobs:
           pip install --upgrade cibuildwheel simpleindex
 
           git config --global core.autocrlf false
-          git clone --branch ${{ inputs.git_tag }} --depth 1 https://github.com/woct0rdho/SageAttention.git
-          cd SageAttention
+          git clone --branch ${{ inputs.git_tag }} --depth 1 https://github.com/woct0rdho/SpargeAttn.git
+          cd SpargeAttn
           git rev-parse HEAD
 
           $Env:CUDA_MINOR_VERSION = "${{ inputs.cuda_minor }}"
@@ -100,8 +110,8 @@ jobs:
             $Env:TORCH_CUDA_ARCH_LIST += "12.0 "
           }
           $Env:TORCH_CUDA_ARCH_LIST += "${{ inputs.extra_cuda_arch }}"
-          $Env:SAGEATTENTION_WHEEL_VERSION_SUFFIX = "+cu12${{ inputs.cuda_minor }}torch2.${{ inputs.torch_minor }}.${{ inputs.torch_patch }}"
-          $Env:SAGEATTENTION_WHEEL_VERSION_SUFFIX += "${{ inputs.extra_wheel_version_suffix }}"
+          $Env:SPAS_SAGE_ATTN_WHEEL_VERSION_SUFFIX = "+cu12${{ inputs.cuda_minor }}torch2.${{ inputs.torch_minor }}.${{ inputs.torch_patch }}"
+          $Env:SPAS_SAGE_ATTN_WHEEL_VERSION_SUFFIX += "${{ inputs.extra_wheel_version_suffix }}"
           if ("${{ inputs.is_python_abi3 }}")
           {
             $Env:CIBW_BUILD = "{cp39-win_amd64,}"
@@ -124,4 +134,4 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          path: SageAttention/wheelhouse/*
+          path: SpargeAttn/wheelhouse/*

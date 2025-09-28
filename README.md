@@ -21,6 +21,8 @@ Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/
 |Clean Outdated SD Portable|[![Clean Outdated SD Portable](https://github.com/licyk/hub-action/actions/workflows/clean-outdated-sd-portable.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/clean-outdated-sd-portable.yml)|
 |Clean HuggingFace Repo Space|[![Clean HuggingFace Repo Space](https://github.com/licyk/hub-action/actions/workflows/clean-hf-repo.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/clean-hf-repo.yml)|
 |Build LoRA Download Page|[![Build LoRA Download Page](https://github.com/licyk/hub-action/actions/workflows/build-lora-download-page.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-lora-download-page.yml)|
+|Build SpargeAttention|[![Build SpargeAttention](https://github.com/licyk/hub-action/actions/workflows/build-spargeattn.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-spargeattn.yml)|
+|Build and Test Triton|[![Build and Test Triton](https://github.com/licyk/hub-action/actions/workflows/build-and-test-triton.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-and-test-triton.yml)|
 
 
 ## 同步仓库教程
