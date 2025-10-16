@@ -305,7 +305,8 @@ def find_latest_package(
             if compare_versions(portable.version, max_version) > 0:
                 latest_stable_portable = [p_type, file, url]
 
-        stable_portable.append(latest_stable_portable)
+        if latest_stable_portable[1] and latest_stable_portable[2]:
+            stable_portable.append(latest_stable_portable)
 
         # 找出版本最高的整合包 (nightly)
         max_version = "00000000"
@@ -318,7 +319,8 @@ def find_latest_package(
             if compare_versions(portable.build_date, max_version) > 0:
                 latest_nightly_portable = [p_type, file, url]
 
-        nightly_portable.append(latest_nightly_portable)
+        if latest_nightly_portable[1] and latest_nightly_portable[2]:
+            nightly_portable.append(latest_nightly_portable)
 
     return stable_portable, nightly_portable
 
