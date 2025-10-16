@@ -186,7 +186,8 @@ def create_download_task(
         in_hf = True
         in_ms = True
         if file_in_repo not in hf_file_list:
-            in_hf = False
+            # in_hf = False
+            pass # 不再同步文件到 HuggingFace
         if file_in_repo not in ms_file_list:
             in_ms = False
         if not in_hf or not in_ms:
