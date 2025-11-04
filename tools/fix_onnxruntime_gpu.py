@@ -6,7 +6,7 @@ import subprocess
 import sys
 from typing import Optional
 from enum import Enum
-
+# TODO: 待更新 cu130 处理逻辑
 
 def get_onnxruntime_version_file() -> Path | None:
     '''获取记录 onnxruntime 版本的文件路径

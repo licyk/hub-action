@@ -152,7 +152,7 @@ def main() -> None:
 
                 origin_lora_path.unlink(missing_ok=True)
                 if lora_without_norm_block_path is not None:
-                    lora_without_norm_block_path.unlink()
+                    lora_without_norm_block_path.unlink(missing_ok=True)
             except Exception as e:
                 traceback.print_exc()
                 print(f"[{count}/{task_sum}] 处理 LoRA 文件时发生错误: {e}")
