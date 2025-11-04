@@ -19,7 +19,7 @@ jobs:
       - name: Config HuggingFace Python Library
         shell: bash
         run: |
-          pip install huggingface_hub hf_xet safetensors --break-system-package
+          pip install huggingface_hub hf_xet safetensors torch tqdm --break-system-package
 
       - name: Remove LoRA norm block and sync (for InvokeAI)
         shell: bash
