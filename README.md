@@ -23,6 +23,7 @@ Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/
 |Build LoRA Download Page|[![Build LoRA Download Page](https://github.com/licyk/hub-action/actions/workflows/build-lora-download-page.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-lora-download-page.yml)|
 |Build SpargeAttention|[![Build SpargeAttention](https://github.com/licyk/hub-action/actions/workflows/build-spargeattn.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-spargeattn.yml)|
 |Build and Test Triton|[![Build and Test Triton](https://github.com/licyk/hub-action/actions/workflows/build-and-test-triton.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-and-test-triton.yml)|
+|Remove LoRA norm block and sync (for InvokeAI)|[![Remove LoRA norm block and sync (for InvokeAI)](https://github.com/licyk/hub-action/actions/workflows/remove-lora-norm-block-and-sync.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/remove-lora-norm-block-and-sync.yml)|
 
 
 ## 同步仓库教程

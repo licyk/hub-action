@@ -1,0 +1,33 @@
+name: Remove LoRA norm block and sync (for InvokeAI)
+
+on: 
+  schedule:
+  # * 是一个特殊字符在 YAML 中，所以你需要引用这个字符串
+  # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
+  - cron: '0 16 * * *' # 每日 24 点进行同步
+  # push:
+  # delete:
+  # create:
+  workflow_dispatch:
+
+
+jobs:
+  Remove-LoRA-Norm-Block-And-Sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Config HuggingFace Python Library
+        shell: bash
+        run: |
+          pip install huggingface_hub hf_xet safetensors --break-system-package
+
+      - name: Remove LoRA norm block and sync (for InvokeAI)
+        shell: bash
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SRC_REPO_ID: licyk/sd-lora
+          SRC_REPO_TYPE: model
+          DST_REPO_ID: licyk/lora_for_invokeai
+          DST_REPO_TYPE: model
+        run: |
+          python "${{ github.workspace }}/scripts/remove_lora_norm_block_and_sync.py"
