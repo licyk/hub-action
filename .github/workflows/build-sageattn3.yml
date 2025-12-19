@@ -1,6 +1,6 @@
-# origin: https://github.com/Comfy-Org/wheels/blob/main/.github/workflows/build-spargeattn.yml
+# origin: https://github.com/Comfy-Org/wheels/blob/main/.github/workflows/build-sageattn3.yml
 
-name: Build SpargeAttention
+name: Build SageAttention3
 
 on:
   workflow_dispatch:
@@ -57,7 +57,7 @@ on:
         default: ''
 
 jobs:
-  build-spargeattn:
+  build-sageattn3:
     # runs-on: windows-large
     runs-on: windows-latest
     steps:
@@ -86,9 +86,11 @@ jobs:
           pip install --upgrade cibuildwheel simpleindex
 
           git config --global core.autocrlf false
-          git clone --branch ${{ inputs.git_tag }} --depth 1 https://github.com/woct0rdho/SpargeAttn.git
-          cd SpargeAttn
+          git clone --branch ${{ inputs.git_tag }} --depth 1 https://github.com/woct0rdho/SageAttention.git
+          cd SageAttention
           git rev-parse HEAD
+          git submodule update --init --recursive
+          cd sageattention3_blackwell
 
           $Env:CUDA_MAJOR_VERSION = "${{ inputs.cuda_major }}"
           $Env:CUDA_MINOR_VERSION = "${{ inputs.cuda_minor }}"
@@ -101,32 +103,17 @@ jobs:
           $Env:PIP_INDEX_URL = "http://127.0.0.1:8000"
 
           $Env:DISTUTILS_USE_SDK = "1"
-          $Env:TORCH_CUDA_ARCH_LIST = "8.0 8.6 8.9 9.0 "
-          if (($Env:CUDA_MAJOR_VERSION -gt "12") -or ($Env:CUDA_MINOR_VERSION -gt "6"))
-          {
-            $Env:TORCH_CUDA_ARCH_LIST += "12.0 "
-          }
+          $Env:TORCH_CUDA_ARCH_LIST = "12.0 "
           $Env:TORCH_CUDA_ARCH_LIST += "${{ inputs.extra_cuda_arch }}"
-          $Env:SPAS_SAGE_ATTN_WHEEL_VERSION_SUFFIX = "+cu${{ inputs.cuda_major }}${{ inputs.cuda_minor }}torch2.${{ inputs.torch_minor }}.${{ inputs.torch_patch }}"
-          $Env:SPAS_SAGE_ATTN_WHEEL_VERSION_SUFFIX += "${{ inputs.extra_wheel_version_suffix }}"
+          $Env:SAGEATTENTION_WHEEL_VERSION_SUFFIX = "+cu${{ inputs.cuda_major }}${{ inputs.cuda_minor }}torch2.${{ inputs.torch_minor }}.${{ inputs.torch_patch }}"
+          $Env:SAGEATTENTION_WHEEL_VERSION_SUFFIX += "${{ inputs.extra_wheel_version_suffix }}"
           if ("${{ inputs.is_python_abi3 }}")
           {
             $Env:CIBW_BUILD = "{cp310-win_amd64,}"
           }
           else
           {
-            if ($Env:TORCH_MINOR_VERSION -gt "8")
-            {
-              $Env:CIBW_BUILD = "{cp310-win_amd64,cp311-win_amd64,cp312-win_amd64,cp313-win_amd64,cp314-win_amd64}"
-            }
-            elseif ($Env:TORCH_MINOR_VERSION -gt "5")
-            {
-              $Env:CIBW_BUILD = "{cp39-win_amd64,cp310-win_amd64,cp311-win_amd64,cp312-win_amd64,cp313-win_amd64}"
-            }
-            else
-            {
-              $Env:CIBW_BUILD = "{cp39-win_amd64,cp310-win_amd64,cp311-win_amd64,cp312-win_amd64}"
-            }
+            $Env:CIBW_BUILD = "{cp310-win_amd64,cp311-win_amd64,cp312-win_amd64,cp313-win_amd64,cp314-win_amd64}"
           }
           $Env:CIBW_BUILD_VERBOSITY = "1"
           # Sometimes torch may conflict with cibuildwheel's pinned dependency versions
@@ -135,4 +122,4 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          path: SpargeAttn/wheelhouse/*
+          path: SageAttention/sageattention3_blackwell/wheelhouse/*

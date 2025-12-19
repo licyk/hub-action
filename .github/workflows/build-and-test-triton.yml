@@ -1,5 +1,6 @@
 # This workflow does not clean caches before building,
 # so the wheel may contain __pycache__ or files from another branch
+# origin: https://github.com/Comfy-Org/wheels/blob/main/.github/workflows/build-and-test-triton.yml
 
 name: Build and Test Triton
 
@@ -24,7 +25,8 @@ on:
 
 jobs:
   build-and-test-triton:
-    runs-on: windows-a10
+    # runs-on: windows-a10
+    runs-on: windows-latest
     steps:
       - name: Create venv
         shell: powershell
@@ -71,6 +73,7 @@ jobs:
           $Env:TRITON_BUILD_UT = "0"
           $Env:CIBW_BUILD = "{cp3${{ inputs.python_minor }}-win_amd64,}"
           $Env:CIBW_BUILD_VERBOSITY = "1"
+          $Env:CIBW_ENABLE = "cpython-freethreading"
           rm wheelhouse/*
           if (Test-Path -Path setup.py)
           {

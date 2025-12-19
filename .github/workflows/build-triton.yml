@@ -1,3 +1,5 @@
+# origin: https://github.com/Comfy-Org/wheels/blob/main/.github/workflows/build-triton.yml
+
 name: Build Triton
 
 on:
@@ -27,6 +29,11 @@ on:
         required: true
         type: string
         default: '0'
+      triton_rel_build_with_asserts:
+        description: Build with PDB and asserts
+        required: true
+        type: string
+        default: '0'
       cibw_build_override:
         description: CIBW_BUILD override
         required: false
@@ -38,11 +45,9 @@ jobs:
     # runs-on: windows-large
     runs-on: windows-latest
     steps:
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-
-      # - uses: Jimver/cuda-toolkit@v0.2.22
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -67,6 +72,7 @@ jobs:
           $Env:TRITON_BUILD_BINARY = "${{ inputs.triton_build_binary }}"
           $Env:TRITON_BUILD_PROTON = "${{ inputs.triton_build_proton }}"
           $Env:TRITON_BUILD_UT = "${{ inputs.triton_build_ut }}"
+          $Env:TRITON_REL_BUILD_WITH_ASSERTS = "${{ inputs.triton_rel_build_with_asserts }}"
           $Env:TRITON_WHEEL_VERSION_SUFFIX = "${{ inputs.triton_wheel_version_suffix }}"
           if ("${{ inputs.cibw_build_override }}")
           {

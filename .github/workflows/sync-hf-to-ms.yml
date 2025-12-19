@@ -1,8 +1,18 @@
-name: Sync HuggingFace Repo To ModelScope
+name: Sync HuggingFace / ModelScope Repo
 
 on:
     workflow_dispatch:
         inputs:
+            src_repo:
+                description: 原仓库地址 (huggingface / modelscope)
+                required: true
+                type: string
+                default: huggingface
+            dst_repo:
+                description: 目的仓库地址 (huggingface / modelscope)
+                required: true
+                type: string
+                default: modelscope
             hf_repo_id:
                 description: HuggingFace 仓库 ID
                 required: true
@@ -16,6 +26,11 @@ on:
                 description: 指定下载 HuggingFace 仓库的文件 (使用通配符描述)
                 required: false
                 type: string
+            hf_repo_path:
+                description: 上传到 HuggingFace 仓库的指定路径
+                required: true
+                type: string
+                default: .
             ms_repo_id:
                 description: ModelScope 仓库 ID
                 required: true
@@ -25,6 +40,10 @@ on:
                 required: true
                 type: string
                 default: model
+            ms_file_include:
+                description: 指定下载 ModelScope 仓库的文件 (使用通配符描述)
+                required: false
+                type: string
             ms_repo_path:
                 description: 上传到 ModelScope 仓库的指定路径
                 required: true
@@ -32,7 +51,7 @@ on:
                 default: .
 
 jobs:
-    Sync-HF-To-MS:
+    Sync-HF-Or-MS-Repo:
         runs-on: ubuntu-latest
         steps:
             - name: Config HuggingFace / ModelScope Python Library
@@ -46,19 +65,44 @@ jobs:
                 HF_TOKEN: ${{ secrets.HF_TOKEN }}
                 MODELSCOPE_API_TOKEN: ${{ secrets.MODELSCOPE_API_TOKEN }}
               run: |
-                echo "下载 HuggingFace 仓库 ${{ inputs.hf_repo_id }} (类型: ${{ inputs.hf_repo_type }}) 到 ${{ github.workspace }}"
-                if [[ ! -z "${{ inputs.hf_file_include }}" ]]; then
-                    echo "指定下载 ${{ inputs.hf_file_include }} 中的文件"
-                    hf download "${{ inputs.hf_repo_id }}" --repo-type "${{ inputs.hf_repo_type }}" --local-dir "${{ github.workspace }}" --include "${{ inputs.hf_file_include }}"
+                if [[ "${{ inputs.src_repo }}" == "huggingface" ]]; then
+                    echo "下载 HuggingFace 仓库 ${{ inputs.hf_repo_id }} (类型: ${{ inputs.hf_repo_type }}) 到 ${{ github.workspace }}"
+                    if [[ ! -z "${{ inputs.hf_file_include }}" ]]; then
+                        echo "指定下载 ${{ inputs.hf_file_include }} 中的文件"
+                        hf download "${{ inputs.hf_repo_id }}" --repo-type "${{ inputs.hf_repo_type }}" --local-dir "${{ github.workspace }}" --include "${{ inputs.hf_file_include }}"
+                    else
+                        hf download "${{ inputs.hf_repo_id }}" --repo-type "${{ inputs.hf_repo_type }}" --local-dir "${{ github.workspace }}"
+                    fi
+                elif [[ "${{ inputs.src_repo }}" == "modelscope" ]]; then
+                    echo "下载 ModelScope 仓库 ${{ inputs.ms_repo_id }} (类型: ${{ inputs.ms_repo_type }}) 到 ${{ github.workspace }}"
+                    modelscope login --token "${{secrets.MODELSCOPE_API_TOKEN }}" &> /dev/null
+                    if [[ ! -z "${{ inputs.ms_file_include }}" ]]; then
+                        echo "指定下载 ${{ inputs.ms_file_include }} 中的文件"
+                        modelscope download "${{ inputs.ms_repo_id }}" --repo-type "${{ inputs.ms_repo_type }}" --local-dir "${{ github.workspace }}" --include "${{ inputs.ms_file_include }}"
+                    else
+                        modelscope download "${{ inputs.ms_repo_id }}" --repo-type "${{ inputs.ms_repo_type }}" --local-dir "${{ github.workspace }}"
+                    fi
                 else
-                    hf download "${{ inputs.hf_repo_id }}" --repo-type "${{ inputs.hf_repo_type }}" --local-dir "${{ github.workspace }}"
+                    echo "未知的原仓库类型: ${{ inputs.src_repo }}"
+                    exit 1
                 fi
-                echo "下载仓库完成"
 
-                echo "清理 HuggingFace 缓存文件夹"
+                echo "下载 ${{ inputs.src_repo }} 仓库完成"
+                echo "清理缓存文件"
                 rm -rf "${{ github.workspace }}/.cache"
+                rm -rf "${{ github.workspace }}/._____temp"
+                rm -f "${{ github.workspace }}/.msc"
+                rm -f "${{ github.workspace }}/.mv"
 
-                echo "上传 ${{ github.workspace }} 到 ModelScope 仓库 ${{ inputs.ms_repo_id }} (类型: ${{ inputs.ms_repo_type }})"
-                modelscope login --token "${{secrets.MODELSCOPE_API_TOKEN }}" &> /dev/null
-                modelscope upload "${{ inputs.ms_repo_id }}" "${{ github.workspace }}" "${{ github.ms_repo_path }}" --repo-type "${{ inputs.ms_repo_type }}"
-                echo "上传仓库完成"
+                if [[ "${{ inputs.dst_repo }}" == "huggingface" ]]; then
+                    echo "上传 ${{ github.workspace }} 到 HuggingFace 仓库 ${{ inputs.hf_repo_id }} (类型: ${{ inputs.hf_repo_type }})"
+                    hf upload "${{ inputs.hf_repo_id }}" "${{ github.workspace }}" "${{ inputs.hf_repo_path }}" --repo-type "${{ inputs.hf_repo_type }}"
+                elif [[ "${{ inputs.dst_repo }}" == "modelscope" ]]; then
+                    echo "上传 ${{ github.workspace }} 到 ModelScope 仓库 ${{ inputs.ms_repo_id }} (类型: ${{ inputs.ms_repo_type }})"
+                    modelscope login --token "${{secrets.MODELSCOPE_API_TOKEN }}" &> /dev/null
+                    modelscope upload "${{ inputs.ms_repo_id }}" "${{ github.workspace }}" "${{ inputs.ms_repo_path }}" --repo-type "${{ inputs.ms_repo_type }}"
+                else
+                    echo "未知的目的仓库类型: ${{ inputs.dst_repo }}"
+                    exit 1
+                fi
+                echo "上传 ${{ inputs.dst_repo }} 仓库完成"

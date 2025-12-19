@@ -16,10 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
       - name: Config HuggingFace Python Library
         shell: bash
         run: |
-          pip install huggingface_hub hf_xet safetensors torch tqdm numpy --break-system-package
+          uv pip install huggingface_hub hf_xet safetensors torch tqdm numpy
 
       - name: Remove LoRA norm block and sync (for InvokeAI)
         shell: bash
