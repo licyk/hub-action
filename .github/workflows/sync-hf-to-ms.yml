@@ -78,9 +78,9 @@ jobs:
                     modelscope login --token "${{secrets.MODELSCOPE_API_TOKEN }}" &> /dev/null
                     if [[ ! -z "${{ inputs.ms_file_include }}" ]]; then
                         echo "指定下载 ${{ inputs.ms_file_include }} 中的文件"
-                        modelscope download "${{ inputs.ms_repo_id }}" --repo-type "${{ inputs.ms_repo_type }}" --local-dir "${{ github.workspace }}" --include "${{ inputs.ms_file_include }}"
+                        modelscope download "${{ inputs.ms_repo_id }}" --repo-type "${{ inputs.ms_repo_type }}" --local_dir "${{ github.workspace }}" --include "${{ inputs.ms_file_include }}"
                     else
-                        modelscope download "${{ inputs.ms_repo_id }}" --repo-type "${{ inputs.ms_repo_type }}" --local-dir "${{ github.workspace }}"
+                        modelscope download "${{ inputs.ms_repo_id }}" --repo-type "${{ inputs.ms_repo_type }}" --local_dir "${{ github.workspace }}"
                     fi
                 else
                     echo "未知的原仓库类型: ${{ inputs.src_repo }}"
