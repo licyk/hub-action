@@ -11,129 +11,73 @@ on:
     workflow_dispatch:
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
+  git-mirror:
+    runs-on: ubuntu-latest
+    strategy:
+      # 即使其中一个同步失败, 也继续执行其他的同步任务
+      fail-fast: false
+      matrix:
+        # 在这里统一定义需要同步的仓库名
+        # 格式:
+        # 1. 原仓库和目的仓库名字不同时: "原仓库名:目的仓库名"
+        # 2. 原仓库和目的仓库名字不同时: "仓库名"
+        repo: [
+          "term-sd",
+          "private-code",
+          "t",
+          "hub-action",
+          "licyk.github.io",
+          "blog",
+          "cursors-archive",
+          "psh2bat",
+          "ani2xcur-cli",
+          "repo_mirror_tools",
+          "ani2xcur",
+          "sd-webui-all-in-one",
+          "temp",
+          "SDNote",
+          "stablediffusion",
+          "README-collection",
+          "a1111-sd-webui-haku-img",
+          "ssfconv",
+          "lazyvim-config",
+          "sd-webui-wd14-tagger",
+          "invoke_wd14_tagger",
+          "ComfyUI-HakuImg",
+          "sd-webui-licyk-style-image",
+          "sd_forge_hypertile_svd_z123",
+          "ComfyUI-TCD-Sampler",
+          "action-gitee-release",
+          "invoke_tipo",
+          "licyk",
+          "ComfyUI-Restart-Sampler",
+          "PBRemTools",
+          "advanced_euler_sampler_extension",
+          "sd-webui-tcd-sampler",
+          "scrcpy-tui",
+          "cinnamon-theme-transparent",
+          "bili-dl-merge"
+        ]
 
-            - name: Sync blog to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }} # 将私钥读取到github action环境变量中
-              with:
-                  # 注意替换为你的 GitHub 源仓库地址
-                  source-repo: git@github.com:licyk/blog.git
-                  # 注意替换为你的 Gitlab 目标仓库地址
-                  destination-repo: git@gitlab.com:licyk/blog.git
+    steps:
+      - name: Parse repo names
+        id: info
+        run: |
+          if echo "${{ matrix.repo }}" | grep -q ":"; then
+              # 将 "A:B" 拆分为两个变量
+              SRC=$(echo "${{ matrix.repo }}" | cut -d':' -f1)
+              DEST=$(echo "${{ matrix.repo }}" | cut -d':' -f2)
+          else
+              SRC="${{ matrix.repo }}"
+              DEST="${{ matrix.repo }}"
+          fi
+          echo "src=${SRC}" >> "${GITHUB_OUTPUT}"
+          echo "dest=${DEST}" >> "${GITHUB_OUTPUT}"
 
-            - name: Sync term-sd to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/term-sd.git
-                  destination-repo: git@gitlab.com:licyk/term-sd.git
-
-            - name: Sync scrcpy-tui to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/scrcpy-tui.git
-                  destination-repo: git@gitlab.com:licyk/scrcpy-tui.git
-      
-            - name: Sync ani2xcur to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/ani2xcur.git
-                  destination-repo: git@gitlab.com:licyk/ani2xcur.git
-
-            - name: Sync bili-dl-merge to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/bili-dl-merge.git
-                  destination-repo: git@gitlab.com:licyk/bili-dl-merge.git
-
-            - name: Sync README-collection to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/README-collection.git
-                  destination-repo: git@gitlab.com:licyk/README-collection.git
-
-            - name: Sync private-code to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/private-code.git
-                  destination-repo: git@gitlab.com:licyk/private-code.git
-
-            - name: Sync hub-action to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/hub-action.git
-                  destination-repo: git@gitlab.com:licyk/hub-action.git
-
-            - name: Sync t to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/t.git
-                  destination-repo: git@gitlab.com:licyk/t.git
-
-            - name: Sync advanced_euler_sampler_extension to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                   source-repo: git@github.com:licyk/advanced_euler_sampler_extension.git
-                   destination-repo: git@gitlab.com:licyk/advanced_euler_sampler_extension.git
-
-            - name: Sync SDNote to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/SDNote.git
-                  destination-repo: git@gitlab.com:licyk/SDNote.git
-
-            - name: Sync sd-webui-all-in-one to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/sd-webui-all-in-one.git
-                  destination-repo: git@gitlab.com:licyk/sd-webui-all-in-one.git
-
-            - name: Sync sd-webui-tcd-sampler to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/sd-webui-tcd-sampler.git
-                  destination-repo: git@gitlab.com:licyk/sd-webui-tcd-sampler.git
-
-            - name: Sync ComfyUI-TCD-Sampler to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/ComfyUI-TCD-Sampler.git
-                  destination-repo: git@gitlab.com:licyk/ComfyUI-TCD-Sampler.git
-
-            - name: Sync ComfyUI-Restart-Sampler to Gitlab
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/ComfyUI-Restart-Sampler.git
-                  destination-repo: git@gitlab.com:licyk/ComfyUI-Restart-Sampler.git
+      - name: Sync ${{ steps.info.outputs.src }} to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          source-repo: "git@github.com:licyk/${{ steps.info.outputs.src }}.git"
+          destination-repo: "git@gitee.com:licyk/${{ steps.info.outputs.dest }}.git"
