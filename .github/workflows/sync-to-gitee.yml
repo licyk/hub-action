@@ -13,33 +13,61 @@ jobs:
       fail-fast: false
       matrix:
         # 在这里统一定义需要同步的仓库名
-        # 格式为: "GitHub 仓库名:Gitee 仓库名"
+        # 格式:
+        # 1. 原仓库和目的仓库名字不同时: "原仓库名:目的仓库名"
+        # 2. 原仓库和目的仓库名字不同时: "仓库名"
         repo: [
-          "blog:blog",
-          "term-sd:term-sd",
-          "scrcpy-tui:scrcpy-tui",
-          "ani2xcur:ani2xcur",
-          "bili-dl-merge:bili-dl-merge",
-          "README-collection:README-collection",
-          "private-code:private-code",
-          "hub-action:hub-action",
+          "term-sd",
+          "private-code",
           "t:tt",
-          "advanced_euler_sampler_extension:advanced_euler_sampler_extension",
-          "sd-webui-all-in-one:sd-webui-all-in-one",
-          "sd-webui-tcd-sampler:sd-webui-tcd-sampler",
-          "ComfyUI-TCD-Sampler:ComfyUI-TCD-Sampler",
-          "ComfyUI-Restart-Sampler:ComfyUI-Restart-Sampler"
+          "hub-action",
+          "licyk.github.io",
+          "blog",
+          "cursors-archive",
+          "psh2bat",
+          "ani2xcur-cli",
+          "repo_mirror_tools",
+          "ani2xcur",
+          "sd-webui-all-in-one",
+          "temp",
+          # "SDNote",
+          "stablediffusion",
+          "README-collection",
+          "a1111-sd-webui-haku-img",
+          "ssfconv",
+          "lazyvim-config",
+          "sd-webui-wd14-tagger",
+          "invoke_wd14_tagger",
+          "ComfyUI-HakuImg",
+          "sd-webui-licyk-style-image",
+          "sd_forge_hypertile_svd_z123",
+          "ComfyUI-TCD-Sampler",
+          "action-gitee-release",
+          "invoke_tipo",
+          "licyk",
+          "ComfyUI-Restart-Sampler",
+          "PBRemTools",
+          "advanced_euler_sampler_extension",
+          "sd-webui-tcd-sampler",
+          "scrcpy-tui",
+          "cinnamon-theme-transparent",
+          "bili-dl-merge"
         ]
 
     steps:
       - name: Parse repo names
         id: info
         run: |
-          # 将 "A:B" 拆分为两个变量
-          SRC=$(echo "${{ matrix.repo }}" | cut -d':' -f1)
-          DEST=$(echo "${{ matrix.repo }}" | cut -d':' -f2)
-          echo "src=$SRC" >> $GITHUB_OUTPUT
-          echo "dest=$DEST" >> $GITHUB_OUTPUT
+          if echo "${{ matrix.repo }}" | grep -q ":"; then
+              # 将 "A:B" 拆分为两个变量
+              SRC=$(echo "${{ matrix.repo }}" | cut -d':' -f1)
+              DEST=$(echo "${{ matrix.repo }}" | cut -d':' -f2)
+          else
+              SRC="${{ matrix.repo }}"
+              DEST="${{ matrix.repo }}"
+          fi
+          echo "src=${SRC}" >> "${GITHUB_OUTPUT}"
+          echo "dest=${DEST}" >> "${GITHUB_OUTPUT}"
 
       - name: Sync ${{ steps.info.outputs.src }} to Gitee
         uses: wearerequired/git-mirror-action@master
