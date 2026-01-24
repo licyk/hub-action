@@ -26,7 +26,7 @@ jobs:
           "repo_mirror_tools",
           "ani2xcur",
           "sd-webui-all-in-one",
-          # "SDNote",
+          "SDNote",
           "stablediffusion",
           "README-collection",
           "a1111-sd-webui-haku-img",
