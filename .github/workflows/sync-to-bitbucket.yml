@@ -11,137 +11,69 @@ on:
     workflow_dispatch:
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
+  git-mirror:
+    runs-on: ubuntu-latest
+    strategy:
+      # 即使其中一个同步失败, 也继续执行其他的同步任务
+      fail-fast: false
+      matrix:
+        # 在这里统一定义需要同步的仓库名
+        # 格式:
+        # 1. 原仓库和目的仓库名字不同时: "原仓库名:目的仓库名"
+        # 2. 原仓库和目的仓库名字不同时: "仓库名"
+        repo: [
+          "term-sd",
+          "t",
+          "hub-action",
+          "cursors-archive",
+          "psh2bat",
+          "ani2xcur-cli",
+          "repo_mirror_tools",
+          "ani2xcur",
+          "sd-webui-all-in-one",
+          "SDNote",
+          "stablediffusion",
+          "README-collection",
+          "a1111-sd-webui-haku-img",
+          "ssfconv",
+          "sd-webui-wd14-tagger",
+          "invoke_wd14_tagger",
+          "ComfyUI-HakuImg",
+          "sd-webui-licyk-style-image",
+          "sd_forge_hypertile_svd_z123",
+          "ComfyUI-TCD-Sampler",
+          "action-gitee-release",
+          "invoke_tipo",
+          "licyk",
+          "ComfyUI-Restart-Sampler",
+          "PBRemTools",
+          "advanced_euler_sampler_extension",
+          "sd-webui-tcd-sampler",
+          "scrcpy-tui",
+          "cinnamon-theme-transparent",
+          "bili-dl-merge"
+        ]
 
-            - name: Sync blog to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }} # 将私钥读取到github action环境变量中
-              with:
-                  # 注意替换为你的 GitHub 源仓库地址
-                  source-repo: git@github.com:licyk/blog.git
-                  # 注意替换为你的 Bitbucket 目标仓库地址
-                  destination-repo: git@bitbucket.org:licyks/blog.git
+    steps:
+      - name: Parse repo names
+        id: info
+        run: |
+          if echo "${{ matrix.repo }}" | grep -q ":"; then
+              # 将 "A:B" 拆分为两个变量
+              SRC=$(echo "${{ matrix.repo }}" | cut -d':' -f1)
+              DEST=$(echo "${{ matrix.repo }}" | cut -d':' -f2)
+          else
+              SRC="${{ matrix.repo }}"
+              DEST="${{ matrix.repo }}"
+          fi
+          echo "src=${SRC}" >> "${GITHUB_OUTPUT}"
+          echo "dest=${DEST}" >> "${GITHUB_OUTPUT}"
 
-            - name: Sync term-sd to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/term-sd.git
-                  destination-repo: git@bitbucket.org:licyks/term-sd.git
+      - name: Sync ${{ steps.info.outputs.src }} to Bitbucket
+        uses: wearerequired/git-mirror-action@master
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+        with:
+          source-repo: "git@github.com:licyk/${{ steps.info.outputs.src }}.git"
+          destination-repo: "git@bitbucket.org:licyk/${{ steps.info.outputs.dest }}.git"
 
-            - name: Sync scrcpy-tui to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/scrcpy-tui.git
-                  destination-repo: git@bitbucket.org:licyks/scrcpy-tui.git
-
-            - name: Sync ani2xcur to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/ani2xcur.git
-                  destination-repo: git@bitbucket.org:licyks/ani2xcur.git
-
-            - name: Sync bili-dl-merge to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/bili-dl-merge.git
-                  destination-repo: git@bitbucket.org:licyks/bili-dl-merge.git
-
-            - name: Sync README-collection to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/README-collection.git
-                  destination-repo: git@bitbucket.org:licyks/README-collection.git
-
-            - name: Sync private-code to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/private-code.git
-                  destination-repo: git@bitbucket.org:licyks/private-code.git
-
-            - name: Sync hub-action to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/hub-action.git
-                  destination-repo: git@bitbucket.org:licyks/hub-action.git
-
-            - name: Sync t to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/t.git
-                  destination-repo: git@bitbucket.org:licyks/t.git
-
-            - name: Sync sd-workflow to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/sd-workflow.git
-                  destination-repo: git@bitbucket.org:licyks/sd-workflow.git
-
-            - name: Sync advanced_euler_sampler_extension to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                   SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/advanced_euler_sampler_extension.git
-                  destination-repo: git@bitbucket.org:licyks/advanced_euler_sampler_extension.git
-            
-            - name: Sync SDNote to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/SDNote.git
-                  destination-repo: git@bitbucket.org:licyks/SDNote.git
-
-            - name: Sync sd-webui-all-in-one to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/sd-webui-all-in-one.git
-                  destination-repo: git@bitbucket.org:licyks/sd-webui-all-in-one.git
-
-            - name: Sync sd-webui-tcd-sampler to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/sd-webui-tcd-sampler.git
-                  destination-repo: git@bitbucket.org:licyks/sd-webui-tcd-sampler.git
-
-            - name: Sync ComfyUI-TCD-Sampler to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/ComfyUI-TCD-Sampler.git
-                  destination-repo: git@bitbucket.org:licyks/ComfyUI-TCD-Sampler.git
-
-            - name: Sync ComfyUI-Restart-Sampler to Bitbucket
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  source-repo: git@github.com:licyk/ComfyUI-Restart-Sampler.git
-                  destination-repo: git@bitbucket.org:licyks/ComfyUI-Restart-Sampler.git
