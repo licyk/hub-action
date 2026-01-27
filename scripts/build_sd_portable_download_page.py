@@ -317,6 +317,7 @@ PROTABLE_ALIAS = {
     "kohya_gui": "Kohya GUI",
     "sd_scripts": "SD Scripts",
     "musubi_tuner": "Musubi Tuner",
+    "qwen_tts_webui": "Qwen TTS WebUI",
 }
 
 
