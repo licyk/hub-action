@@ -32,6 +32,13 @@ jobs:
         run: |
           python "${{ github.workspace }}/scripts/build_pypi.py"
 
+      - name: Build PyPI Legecy List
+        shell: bash
+        env:
+          root_path: ${{ github.workspace }}/artifact/pypi_legecy
+        run: |
+          python "${{ github.workspace }}/scripts/build_pypi_legecy.py"
+
       - name: Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -56,14 +63,21 @@ jobs:
         env:
           GIT_URL: 'git@github.com:licyk/t.git'
         run: |
-          git clone "$GIT_URL" "${{ github.workspace }}/repo"
+          git clone "${GIT_URL}" "${{ github.workspace }}/repo"
           git -C "${{ github.workspace }}/repo" checkout gh-pages
-          cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/pypi"
-          cd "${{ github.workspace }}/repo"
-          git add -A || true
-          git commit -m "Build PyPI. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
+          rm -rf "${{ github.workspace }}/repo/pypi"
+          rm -rf "${{ github.workspace }}/repo/pypi_gh"
+          rm -rf "${{ github.workspace }}/repo/pypi_hf"
+          rm -rf "${{ github.workspace }}/repo/pypi_hf_mirror"
+          rm -rf "${{ github.workspace }}/repo/pypi_legecy"
+          cp -rf "${{ github.workspace }}/artifact/pypi" "${{ github.workspace }}/repo/pypi"
+          cp -rf "${{ github.workspace }}/artifact/pypi_gh" "${{ github.workspace }}/repo/pypi_gh"
+          cp -rf "${{ github.workspace }}/artifact/pypi_hf" "${{ github.workspace }}/repo/pypi_hf"
+          cp -rf "${{ github.workspace }}/artifact/pypi_hf_mirror" "${{ github.workspace }}/repo/pypi_hf_mirror"
+          cp -rf "${{ github.workspace }}/artifact/pypi_legecy" "${{ github.workspace }}/repo/pypi_legecy"
+          git -C "${{ github.workspace }}/repo" add -A || true
+          git -C "${{ github.workspace }}/repo" commit -m "Build PyPI. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
 
       - name: Push Repo
         run: |
-          cd "${{ github.workspace }}/repo"
-          git push origin HEAD:gh-pages || true
+          git -C "${{ github.workspace }}/repo" push origin HEAD:gh-pages || true
