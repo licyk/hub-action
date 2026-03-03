@@ -56,7 +56,7 @@ def fetch_webpage_content(
         response.encoding = "utf-8"
         return response.text
     except requests.RequestException as e:
-        raise Exception(f"获取网页内容时发生错误: {e}")
+        raise Exception(f"获取网页内容时发生错误: {e}") from e # pylint: disable=broad-exception-raised
 
 
 def get_lora_model_info(html_content: str, base_url: str) -> LoRAModelCards:
@@ -205,7 +205,7 @@ def save_list_to_json(save_path: Path | str, origin_list: list) -> bool:
             )
         print(f"保存 Json 文件到 {save_path}")
         return True
-    except Exception as e:
+    except Exception as e: # pylint: disable=broad-exception-caught
         print(f"保存列表到 {save_path} 时发生错误: {e}")
         return False
 
