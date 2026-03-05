@@ -1,0 +1,43 @@
+name: Build InvokeAI
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/build_invokeai.yml"
+  # delete:
+  # create:
+  schedule:
+  # * is a special character in YAML so you have to quote this string
+  # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
+  # https://docs.github.com/zh/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule
+  - cron: '30 16 * * 0'
+  workflow_dispatch:
+
+jobs:
+  Build-InvokeAI:
+    name: Build InvokeAI
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: List files in the repository
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path "${{ github.workspace }}" -Recurse
+
+      - name: Launch InvokeAI Installer
+        shell: pwsh
+        env:
+          UV_NO_PROGRESS: 1
+        run: |
+          & "${{ github.workspace }}/invokeai_installer.ps1" `
+            -InstallPath "${{ github.workspace }}/invokeai" `
+            -BuildMode `
+            -BuildWithLaunch `
+            -BuildWithUpdate `
+            -DisablePyPIMirror `
+            -DisableGithubMirror `
+            -DisableHuggingFaceMirror `
+            -NoPreDownloadModel
