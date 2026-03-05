@@ -9,7 +9,7 @@ on:
   # delete:
   # create:
   schedule:
-  # * is a special character in YAML so you have to quote this string
+  # * is a special character in YAML so you have to quote this string1
   # UTC 17:00 -> CST (China) 1:00, see https://datetime360.com/cn/utc-cst-china-time/
   # https://docs.github.com/zh/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule
   - cron: '30 16 * * 0'
