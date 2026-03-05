@@ -70,6 +70,7 @@ jobs:
           echo "dest=${DEST}" >> "${GITHUB_OUTPUT}"
 
       - name: Sync ${{ steps.info.outputs.src }} to Bitbucket
+        continue-on-error: true
         uses: wearerequired/git-mirror-action@master
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
