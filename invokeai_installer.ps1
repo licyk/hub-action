@@ -2434,10 +2434,6 @@ function Get-LaunchCoreArgs {
     `$launch_params = New-Object System.Collections.ArrayList
     Set-PyPIMirror `$launch_params
     Set-uv `$launch_params
-    if (`$script:BuildWithTorch) {
-        `$launch_params.Add(`"--index`") | Out-Null
-        `$launch_params.Add(`$BuildWithTorch) | Out-Null
-    }
     if (!(`$script:BuildMode)) {
         `$launch_params.Add(`"--interactive`") | Out-Null
     }

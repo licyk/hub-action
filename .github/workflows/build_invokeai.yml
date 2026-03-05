@@ -37,6 +37,7 @@ jobs:
             -BuildMode `
             -BuildWithLaunch `
             -BuildWithUpdate `
+            -BuildWithTorch `
             -DisablePyPIMirror `
             -DisableGithubMirror `
             -DisableHuggingFaceMirror `
