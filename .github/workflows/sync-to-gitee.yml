@@ -46,7 +46,8 @@ jobs:
           "sd-webui-tcd-sampler",
           "scrcpy-tui",
           "cinnamon-theme-transparent",
-          "bili-dl-merge"
+          "bili-dl-merge",
+          "qwen-tts-webui"
         ]
 
     steps:
@@ -72,3 +73,4 @@ jobs:
         with:
           source-repo: "git@github.com:licyk/${{ steps.info.outputs.src }}.git"
           destination-repo: "git@gitee.com:licyk/${{ steps.info.outputs.dest }}.git"
+

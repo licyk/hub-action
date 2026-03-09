@@ -51,7 +51,8 @@ jobs:
           "sd-webui-tcd-sampler",
           "scrcpy-tui",
           "cinnamon-theme-transparent",
-          "bili-dl-merge"
+          "bili-dl-merge",
+          "qwen-tts-webui"
         ]
 
     steps:
