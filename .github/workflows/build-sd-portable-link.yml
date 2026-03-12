@@ -58,6 +58,9 @@ jobs:
         run: |
           git clone "$GIT_URL" "${{ github.workspace }}/repo"
           git -C "${{ github.workspace }}/repo" checkout gh-pages
+          mkdir -p "${{ github.workspace }}/repo/sd_portable"
+          rm -rf "${{ github.workspace }}/repo/sd_portable/stable"
+          rm -rf "${{ github.workspace }}/repo/sd_portable/nightly"
           cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/sd_portable"
           cd "${{ github.workspace }}/repo"
           git add -A || true
