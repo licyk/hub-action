@@ -1,4 +1,4 @@
-name: Build SD Protable Download Link
+name: Build SD Portable Download Link
 
 on: 
   schedule:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  Build-SD-Protable-Download-Link:
+  Build-SD-Portable-Download-Link:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
         run: |
           pip install huggingface_hub modelscope requests --break-system-package
 
-      - name: Build SD Protable Download Link
+      - name: Build SD Portable Download Link
         shell: bash
         env:
           ROOT_PATH: ${{ github.workspace }}/artifact/
@@ -61,7 +61,7 @@ jobs:
           cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/sd_portable"
           cd "${{ github.workspace }}/repo"
           git add -A || true
-          git commit -m "Build SD Protable Download Link. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
+          git commit -m "Build SD Portable Download Link. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
 
       - name: Push Repo
         run: |
