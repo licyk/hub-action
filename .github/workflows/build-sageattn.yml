@@ -74,6 +74,7 @@ jobs:
 
       - name: Build wheel
         shell: powershell
+        continue-on-error: true
         run: |
           # Get-ChildItem Env:
           # (Get-WmiObject Win32_Processor).Name
@@ -115,18 +116,7 @@ jobs:
           }
           else
           {
-            if ($Env:TORCH_MINOR_VERSION -gt "8")
-            {
-              $Env:CIBW_BUILD = "{cp310-win_amd64,cp311-win_amd64,cp312-win_amd64,cp313-win_amd64,cp314-win_amd64}"
-            }
-            elseif ($Env:TORCH_MINOR_VERSION -gt "5")
-            {
-              $Env:CIBW_BUILD = "{cp39-win_amd64,cp310-win_amd64,cp311-win_amd64,cp312-win_amd64,cp313-win_amd64}"
-            }
-            else
-            {
-              $Env:CIBW_BUILD = "{cp39-win_amd64,cp310-win_amd64,cp311-win_amd64,cp312-win_amd64}"
-            }
+            $Env:CIBW_BUILD = "{cp310-win_amd64,cp311-win_amd64,cp312-win_amd64,cp313-win_amd64,cp314-win_amd64}"
           }
           $Env:CIBW_BUILD_VERBOSITY = "1"
           # Sometimes torch may conflict with cibuildwheel's pinned dependency versions

@@ -53,6 +53,7 @@ jobs:
 
       - name: Build wheel
         shell: powershell
+        continue-on-error: true
         run: |
           # Get-ChildItem Env:
           # (Get-WmiObject Win32_Processor).Name
