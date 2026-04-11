@@ -61,7 +61,7 @@ jobs:
 
       - name: Commit Repo
         env:
-          GIT_URL: 'git@github.com:licyk/t.git'
+          GIT_URL: 'git@github.com:licyk/wheels.git'
         run: |
           git clone "${GIT_URL}" "${{ github.workspace }}/repo"
           git -C "${{ github.workspace }}/repo" checkout gh-pages
