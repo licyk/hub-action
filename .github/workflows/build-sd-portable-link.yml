@@ -1,8 +1,8 @@
 name: Build SD Portable Download Link
 
 on: 
-  schedule:
-  - cron: '0 22 * * *'
+  # schedule:
+  # - cron: '0 22 * * *'
   # push:
   # delete:
   # create:

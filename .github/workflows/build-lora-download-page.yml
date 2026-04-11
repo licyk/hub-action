@@ -54,17 +54,14 @@ jobs:
 
       - name: Commit Repo
         env:
-          GIT_URL: 'git@github.com:licyk/t.git'
+          GIT_URL: 'git@github.com:licyk/resources.git'
         run: |
           git clone "$GIT_URL" "${{ github.workspace }}/repo"
           git -C "${{ github.workspace }}/repo" checkout gh-pages
-          mkdir -p "${{ github.workspace }}/repo/lora_model"
-          cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/lora_model"
-          cd "${{ github.workspace }}/repo"
-          git add -A || true
-          git commit -m "Build LoRA Download Page. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
+          cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/"
+          git -C "${{ github.workspace }}/repo" add -A || true
+          git -C "${{ github.workspace }}/repo" commit -m "Build LoRA Download Page. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
 
       - name: Push Repo
         run: |
-          cd "${{ github.workspace }}/repo"
-          git push origin HEAD:gh-pages || true
+          git -C "${{ github.workspace }}/repo" push origin HEAD:gh-pages || true

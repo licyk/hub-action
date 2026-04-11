@@ -61,11 +61,9 @@ jobs:
           git clone "$GIT_URL" "${{ github.workspace }}/repo"
           git -C "${{ github.workspace }}/repo" checkout gh-pages
           cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/"
-          cd "${{ github.workspace }}/repo"
-          git add -A || true
-          git commit -m "Build SD Portable Download Page. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
+          git -C "${{ github.workspace }}/repo" add -A || true
+          git -C "${{ github.workspace }}/repo" commit -m "Build SD Portable Download Page. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
 
       - name: Push Repo
         run: |
-          cd "${{ github.workspace }}/repo"
-          git push origin HEAD:gh-pages || true
+          git -C "${{ github.workspace }}/repo" push origin HEAD:gh-pages || true
