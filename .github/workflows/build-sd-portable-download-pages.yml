@@ -56,12 +56,11 @@ jobs:
 
       - name: Commit Repo
         env:
-          GIT_URL: 'git@github.com:licyk/t.git'
+          GIT_URL: 'git@github.com:licyk/resources.git'
         run: |
           git clone "$GIT_URL" "${{ github.workspace }}/repo"
           git -C "${{ github.workspace }}/repo" checkout gh-pages
-          mkdir -p "${{ github.workspace }}/repo/sd_portable"
-          cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/sd_portable"
+          cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/"
           cd "${{ github.workspace }}/repo"
           git add -A || true
           git commit -m "Build SD Portable Download Page. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
