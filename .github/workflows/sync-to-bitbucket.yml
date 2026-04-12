@@ -52,7 +52,9 @@ jobs:
           "scrcpy-tui",
           "cinnamon-theme-transparent",
           "bili-dl-merge",
-          "qwen-tts-webui"
+          "qwen-tts-webui",
+          "resources",
+          "wheels"
         ]
 
     steps:
