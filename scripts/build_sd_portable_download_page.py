@@ -430,6 +430,8 @@ PROTABLE_ALIAS = {
     "sd_webui_forge_classic": "Stable Diffusion WebUI Forge Classic",
     "sd_next": "SD Next",
     "comfyui": "ComfyUI",
+    "comfyui_rocm": "ComfyUI (ROCm)",
+    "comfyui_xpu": "ComfyUI (XPU)",
     "fooocus": "Fooocus",
     "invokeai": "InvokeAI",
     "sd_trainer": "SD Trainer",
