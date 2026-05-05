@@ -49,7 +49,8 @@ jobs:
           "bili-dl-merge",
           "qwen-tts-webui",
           "resources",
-          "wheels"
+          "wheels",
+          "sd-webui-all-in-one-launcher"
         ]
 
     steps:
