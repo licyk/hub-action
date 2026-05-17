@@ -55,7 +55,8 @@ jobs:
           "qwen-tts-webui",
           "resources",
           "wheels",
-          "sd-webui-all-in-one-launcher"
+          "sd-webui-all-in-one-launcher",
+          "python-docstring-checker"
         ]
 
     steps:
