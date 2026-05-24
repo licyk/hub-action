@@ -56,7 +56,8 @@ jobs:
           "resources",
           "wheels",
           "sd-webui-all-in-one-launcher",
-          "python-docstring-checker"
+          "python-docstring-checker",
+          cursor-sheet"
         ]
 
     steps:
