@@ -428,6 +428,7 @@ PROTABLE_ALIAS = {
     "sd_webui_forge": "Stable Diffusion WebUI Forge",
     "sd_webui_reforge": "Stable Diffusion WebUI reForge",
     "sd_webui_forge_classic": "Stable Diffusion WebUI Forge Classic",
+    "sd_webui_forge_neo": "Stable Diffusion WebUI Forge Neo",
     "sd_next": "SD Next",
     "comfyui": "ComfyUI",
     "comfyui_rocm": "ComfyUI (ROCm)",
