@@ -13,19 +13,30 @@ import os
 import re
 import time
 import datetime
+import logging
+import shlex
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
 from functools import wraps
 from typing import (
+    Any,
     Literal,
     Callable,
     TypeVar,
     ParamSpec,
     cast,
 )
+from pathlib import Path
 from collections import namedtuple
 
 from huggingface_hub import HfApi, CommitOperationDelete
 from modelscope import HubApi
 
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -132,6 +143,347 @@ def retryable(
     return decorator
 
 
+
+
+def get_modelscope_repo_url(
+    token: str,
+    repo_id: str,
+    repo_type: Literal["model", "dataset", "space"] = "model",
+) -> str:
+    if repo_type == "model":
+        return f"https://oauth2:{token}@www.modelscope.cn/{repo_id}.git"
+    elif repo_type == "dataset":
+        return f"https://oauth2:{token}@www.modelscope.cn/datasets/{repo_id}.git"
+    elif repo_type == "space":
+        return f"https://oauth2:{token}@www.modelscope.cn/studios/{repo_id}.git"
+    else:
+        raise ValueError(f"Invalid repo_type: {repo_type}")
+
+
+def get_modelscope_git_token(token: str) -> str:
+    api = HubApi()
+    git_token, _ = api.login(access_token=token)
+    if not git_token:
+        raise RuntimeError("获取 ModelScope Git Token 失败")
+    return git_token
+
+
+def redact_sensitive_text(
+    text: str | None,
+    sensitive_values: list[str] | tuple[str, ...] | None = None,
+) -> str | None:
+    """脱敏命令输出中的 token 和带认证信息的 URL"""
+    if text is None:
+        return None
+
+    redacted = text
+    for value in sorted(
+        [value for value in sensitive_values or [] if value],
+        key=len,
+        reverse=True,
+    ):
+        redacted = redacted.replace(value, "***")
+
+    return re.sub(r"oauth2:[^@\s]+@", "oauth2:***@", redacted)
+
+
+def preprocess_command(
+    command: list[str] | str,
+    shell: bool,
+) -> list[str] | str:
+    """针对不同平台对命令进行预处理
+
+    Args:
+        command (list[str] | str): 原始命令
+        shell (bool): 是否调用 Shell
+    Returns:
+        (list[str] | str): 处理后的命令
+    """
+    if sys.platform == "win32":
+        # Windows 平台
+        # 字符串命令和列表命令都可行
+        return command
+    else:
+        # Linux / macOS 平台
+        if shell:
+            # 使用字符串命令
+            if isinstance(command, list):
+                return shlex.join(command)
+            return command
+        # 使用列表命令
+        if isinstance(command, str):
+            return shlex.split(command)
+        return command
+
+
+def run_cmd(
+    command: str | list[str],
+    custom_env: dict[str, str] | None = None,
+    live: bool | None = True,
+    shell: bool | None = None,
+    cwd: Path | None = None,
+    check: bool | None = True,
+    sensitive_values: list[str] | tuple[str, ...] | None = None,
+) -> str | None:
+    """执行 Shell 命令
+
+    Args:
+        command (str | list[str]): 要执行的命令
+        custom_env (dict[str, str] | None): 自定义环境变量
+        live (bool | None): 是否实时输出命令执行日志
+        shell (bool | None): 是否使用内置 Shell 执行命令
+        cwd (Path | None): 执行进程时的起始路径
+        check (bool | None): 是否检查进程退出状态
+        sensitive_values (list[str] | tuple[str, ...] | None): 需要从输出中脱敏的敏感内容
+    Returns:
+        str | None: 命令输出内容, 当 live=True 或执行失败时可能返回 None
+    Raises:
+        RuntimeError: 命令执行失败且 check=True 时
+    """
+
+    if shell is None:
+        shell = sys.platform != "win32"
+
+    if custom_env is None:
+        custom_env = os.environ.copy()
+
+    command_to_exec = preprocess_command(command=command, shell=shell)
+
+    kwargs: dict[str, Any] = {
+        "args": command_to_exec,
+        "shell": shell,
+        "env": custom_env,
+        "cwd": cwd,
+        "encoding": "utf-8",
+        "errors": "ignore",
+    }
+
+    if not live or sensitive_values:
+        kwargs["stdout"] = kwargs["stderr"] = subprocess.PIPE
+
+    result: subprocess.CompletedProcess[str] = subprocess.run(**kwargs)  # pylint: disable=subprocess-run-check
+
+    if check and result.returncode != 0:
+        errors = [
+            f"执行命令时发生错误, 错误代码: {result.returncode}",
+        ]
+        if result.stdout:
+            stdout = redact_sensitive_text(result.stdout, sensitive_values)
+            errors.append(f"标准输出: {stdout}")
+        if result.stderr:
+            stderr = redact_sensitive_text(result.stderr, sensitive_values)
+            errors.append(f"错误输出: {stderr}")
+
+        raise RuntimeError("\n".join(errors))
+
+    return redact_sensitive_text(result.stdout, sensitive_values)
+
+
+
+def remove_files(
+    path: Path,
+) -> None:
+    """文件删除工具，支持删除只读文件和非空文件夹。
+
+    Args:
+        path (Path): 要删除的文件或目录路径
+    Raises:
+        ValueError: 路径不存在时
+        OSError: 删除过程中的系统错误
+    """
+
+    if not _path_exists(path):
+        logger.error("路径不存在: '%s'", path)
+        raise ValueError(f"要删除的 {path} 路径不存在")
+
+    def _handle_remove_readonly(
+        func,
+        path_str,
+        _,
+    ):
+        """处理只读文件的错误处理函数"""
+        if os.path.exists(path_str):
+            os.chmod(path_str, stat.S_IWRITE)
+            func(path_str)
+
+    try:
+        if path.is_symlink():
+            # 处理符号链接, 不跟随链接修改目标权限
+            logger.debug("删除软链接: '%s'", path)
+            path.unlink()
+
+        elif path.is_file():
+            # 处理文件
+            logger.debug("删除文件: '%s'", path)
+            os.chmod(path, stat.S_IWRITE)
+            path.unlink()
+
+        elif path.is_dir():
+            # 处理文件夹
+            logger.debug("删除目录: '%s'", path)
+            shutil.rmtree(path, onerror=_handle_remove_readonly)
+
+    except OSError as e:
+        logger.error("删除失败: '%s' - 原因: %s", path, e)
+        raise e
+
+
+def _path_exists(
+    path: Path,
+) -> bool:
+    """判断路径是否存在, 包括失效软链接"""
+    return path.exists() or path.is_symlink()
+
+
+def _copy_symlink(
+    src: Path,
+    dst: Path,
+) -> None:
+    """复制软链接本身, 不复制软链接指向的内容"""
+    if dst.exists() and dst.is_dir() and not dst.is_symlink():
+        raise IsADirectoryError(f"目标路径已存在且为目录: {dst}")
+
+    if _path_exists(dst):
+        remove_files(dst)
+
+    dst.symlink_to(os.readlink(src), target_is_directory=src.is_dir())
+
+
+def copy_files(
+    src: Path,
+    dst: Path,
+) -> None:
+    """复制文件或目录
+
+    Args:
+        src (Path): 源文件路径
+        dst (Path): 复制文件到指定的路径
+    Raises:
+        PermissionError: 没有权限复制文件时
+        OSError: 复制文件失败时
+        FileNotFoundError: 源文件未找到时
+        ValueError: 路径逻辑错误（如循环复制）时
+    """
+    try:
+        # 保留软链接路径本身, 只在循环检测时解析真实路径
+        src_path = src.absolute()
+        dst_path = dst.absolute()
+
+        # 检查源是否存在
+        if not _path_exists(src_path):
+            logger.error("源路径不存在: '%s'", src)
+            raise FileNotFoundError(f"源路径不存在: {src}")
+
+        # 防止递归复制（例如将目录复制到其自身的子目录中）
+        if src_path.is_dir() and not src_path.is_symlink() and dst_path.resolve().is_relative_to(src_path.resolve()):
+            logger.error("不能将目录复制到自身或其子目录中: '%s'", src)
+            raise ValueError(f"不能将目录复制到自身或其子目录中: {src}")
+
+        # 如果目标是已存在的目录, 则在其下创建同名项
+        if dst_path.exists() and dst_path.is_dir():
+            dst_file = dst_path / src_path.name
+        else:
+            dst_file = dst_path
+
+        # 确保目标父目录存在
+        dst_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # 复制操作
+        if src_path.is_symlink():
+            _copy_symlink(src_path, dst_file)
+        elif src_path.is_file():
+            # copy2 会尽量保留文件元数据
+            logger.debug("复制文件: '%s' -> '%s'", src_path, dst_file)
+            shutil.copy2(src_path, dst_file)
+        else:
+            # symlinks=True: 保留软链接本身而非复制指向的内容
+            # dirs_exist_ok=True: 实现合并逻辑，如果目标目录已存在则覆盖同名文件
+            logger.debug("复制目录: '%s' -> '%s'", src_path, dst_file)
+            try:
+                shutil.copytree(src_path, dst_file, symlinks=True, dirs_exist_ok=True)
+            except shutil.Error:
+                # Linux 中遇到已存在的软链接会导致失败, 则使用 symlinks=False 重试
+                logger.debug("保留软链接复制目录失败, 改为复制软链接目标内容: '%s' -> '%s'", src_path, dst_file)
+                shutil.copytree(src_path, dst_file, symlinks=False, dirs_exist_ok=True)
+
+    except PermissionError as e:
+        logger.error("权限错误, 请检查文件权限或以管理员身份运行: %s", e)
+        raise e
+    except OSError as e:
+        logger.error("复制失败: %s", e)
+        raise e
+
+
+
+def move_files(
+    src: Path,
+    dst: Path,
+) -> None:
+    """移动文件或目录
+
+    Args:
+        src (Path): 源路径
+        dst (Path): 目标路径
+    Raises:
+        FileNotFoundError: 源路径不存在时
+        PermissionError: 权限不足以移动文件时
+        OSError: 移动文件失败时
+        ValueError: 路径逻辑错误（如循环移动）时
+    """
+    try:
+        src_path = src.absolute()
+        dst_path = dst.absolute()
+
+        if not _path_exists(src_path):
+            logger.error("源路径不存在: '%s'", src)
+            raise FileNotFoundError(f"源路径不存在: {src}")
+
+        if src_path == dst_path:
+            return
+
+        # 确定目的路径
+        if dst_path.exists() and dst_path.is_dir():
+            final_dst = dst_path / src_path.name
+        else:
+            final_dst = dst_path
+
+        if src_path.is_file() or src_path.is_symlink():
+            if final_dst.is_file() or final_dst.is_symlink():
+                remove_files(final_dst)
+
+            final_dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(src_path), str(final_dst))
+            return
+
+        if src_path.is_dir():
+            src_real = src_path.resolve()
+            final_dst_real = final_dst.resolve()
+            if final_dst_real.is_relative_to(src_real):
+                logger.error("不能将目录移动到自身或其子目录中: '%s'", src)
+                raise ValueError(f"不能将目录移动到自身或其子目录中: {src}")
+
+            if not final_dst.exists():
+                final_dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(src_path), str(final_dst))
+            elif not final_dst.is_dir():
+                remove_files(final_dst)
+                shutil.move(str(src_path), str(final_dst))
+            else:
+                logger.debug("目标目录已存在，执行合并操作: '%s' -> '%s'", src_path, final_dst)
+                for item in src_path.iterdir():
+                    move_files(item, final_dst / item.name)
+
+                if src_path.exists():
+                    src_path.rmdir()
+
+    except PermissionError as e:
+        logger.error("权限错误, 请检查文件权限或以管理员身份运行: %s", e)
+        raise e
+    except OSError as e:
+        logger.error("移动失败: %s", e)
+        raise e
+
+
 # 解析整合包文件名的正则表达式
 PORTABLE_NAME_PATTERN = r'''
     ^
@@ -212,6 +564,212 @@ HFRepoType = Literal["model", "dataset", "space"]
 
 # ModelScope 仓库类型
 MSRepoType = Literal["model", "dataset", "space"]
+
+
+class ModelScopeGitRepo:
+    """通过 git 操作 ModelScope 仓库的上下文管理器"""
+
+    def __init__(
+        self,
+        repo_id: str,
+        repo_type: MSRepoType,
+        token: str,
+        repo_path: str | Path | None = None,
+    ) -> None:
+        self.repo_id = repo_id
+        self.repo_type = repo_type
+        self.token = token
+        self.repo_path = Path(repo_path).expanduser() if repo_path is not None else None
+        self._temp_dir: tempfile.TemporaryDirectory | None = None
+        self._git_token: str | None = None
+        self._repo_url: str | None = None
+
+    def __enter__(self) -> "ModelScopeGitRepo":
+        self._prepare_repo_path()
+        try:
+            repo_path = self._require_repo_path()
+            self._git_token = get_modelscope_git_token(self.token)
+            self._repo_url = get_modelscope_repo_url(
+                token=self._git_token,
+                repo_id=self.repo_id,
+                repo_type=self.repo_type,
+            )
+            clone_env = os.environ.copy()
+            clone_env["GIT_LFS_SKIP_SMUDGE"] = "1"
+
+            print(f"克隆 ModelScope 仓库 {self.repo_id} (类型: {self.repo_type})")
+            run_cmd(
+                ["git", "clone", self._repo_url, str(repo_path)],
+                custom_env=clone_env,
+                live=False,
+                shell=False,
+                sensitive_values=self._sensitive_values(),
+            )
+            self._git(["lfs", "install", "--local"])
+            self._ensure_git_identity()
+            return self
+        except Exception:
+            self._cleanup()
+            raise
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: Any,
+    ) -> None:
+        self._cleanup()
+
+    def add(
+        self,
+        src: str | Path,
+        dst: str | Path | None = None,
+    ) -> None:
+        """添加本地文件或目录到仓库"""
+        src_path = Path(src).expanduser()
+        if dst is None:
+            if not src_path.name:
+                raise ValueError(f"无法从源路径推断仓库目标路径: {src}")
+            dst_path = self._resolve_repo_path(src_path.name)
+        else:
+            dst_path = self._resolve_repo_path(dst)
+
+        copy_files(src_path, dst_path)
+
+    def delete(
+        self,
+        path: str | Path,
+    ) -> None:
+        """删除仓库内文件或目录"""
+        target_path = self._resolve_repo_path(path)
+        if not _path_exists(target_path):
+            print(f"仓库路径不存在, 跳过删除: {Path(path).as_posix()}")
+            return
+
+        remove_files(target_path)
+
+    def copy(
+        self,
+        src: str | Path,
+        dst: str | Path,
+    ) -> None:
+        """复制仓库内文件或目录"""
+        copy_files(
+            self._resolve_repo_path(src),
+            self._resolve_repo_path(dst),
+        )
+
+    def move(
+        self,
+        src: str | Path,
+        dst: str | Path,
+    ) -> None:
+        """移动仓库内文件或目录"""
+        move_files(
+            self._resolve_repo_path(src),
+            self._resolve_repo_path(dst),
+        )
+
+    def commit(
+        self,
+        message: str = "Clean outdated sd portable",
+    ) -> bool:
+        """提交并推送仓库变更, 无变更时返回 False"""
+        self._git(["add", "-A"])
+        status = self._git(["status", "--porcelain"], live=False)
+        if not status or not status.strip():
+            print("ModelScope 仓库没有需要提交的变更")
+            return False
+
+        self._git(["commit", "-m", message])
+        self._git(
+            ["push", "origin", "HEAD"],
+            live=False,
+            sensitive_values=self._sensitive_values(),
+        )
+        return True
+
+    def _prepare_repo_path(self) -> None:
+        if self.repo_path is None:
+            self._temp_dir = tempfile.TemporaryDirectory()
+            self.repo_path = Path(self._temp_dir.name)
+            return
+
+        if self.repo_path.exists():
+            if not self.repo_path.is_dir():
+                raise NotADirectoryError(f"临时仓库路径不是目录: {self.repo_path}")
+            if any(self.repo_path.iterdir()):
+                raise ValueError(f"临时仓库路径必须为空目录: {self.repo_path}")
+        else:
+            self.repo_path.mkdir(parents=True, exist_ok=True)
+
+    def _require_repo_path(self) -> Path:
+        if self.repo_path is None:
+            raise RuntimeError("ModelScope Git 仓库尚未初始化")
+        return self.repo_path
+
+    def _resolve_repo_path(
+        self,
+        path: str | Path,
+    ) -> Path:
+        repo_root = self._require_repo_path().resolve()
+        repo_path = Path(path)
+        if repo_path.is_absolute() or ".." in repo_path.parts:
+            raise ValueError(f"仓库路径不能是绝对路径或包含 '..': {path}")
+
+        target_path = (repo_root / repo_path).resolve(strict=False)
+        if not target_path.is_relative_to(repo_root):
+            raise ValueError(f"仓库路径不能逃出仓库目录: {path}")
+
+        return target_path
+
+    def _git(
+        self,
+        args: list[str],
+        live: bool | None = True,
+        check: bool | None = True,
+        sensitive_values: list[str] | tuple[str, ...] | None = None,
+    ) -> str | None:
+        return run_cmd(
+            ["git", *args],
+            cwd=self._require_repo_path(),
+            live=live,
+            shell=False,
+            check=check,
+            sensitive_values=sensitive_values,
+        )
+
+    def _sensitive_values(self) -> list[str]:
+        return [
+            value
+            for value in [self.token, self._git_token, self._repo_url]
+            if value
+        ]
+
+    def _ensure_git_identity(self) -> None:
+        name = self._git(["config", "user.name"], live=False, check=False)
+        email = self._git(["config", "user.email"], live=False, check=False)
+        if not name or not name.strip():
+            self._git(["config", "user.name", "github-actions[bot]"])
+        if not email or not email.strip():
+            self._git(
+                [
+                    "config",
+                    "user.email",
+                    "github-actions[bot]@users.noreply.github.com",
+                ]
+            )
+
+    def _cleanup(self) -> None:
+        if self._temp_dir is not None:
+            self._temp_dir.cleanup()
+            self._temp_dir = None
+            self.repo_path = None
+            return
+
+        if self.repo_path is not None and _path_exists(self.repo_path):
+            remove_files(self.repo_path)
+        self.repo_path = None
 
 
 def get_repo_file(
@@ -397,30 +955,33 @@ def remove_files_from_hf_repo(
 
 
 def remove_files_from_ms_repo(
-    api: HubApi,
     repo_id: str,
     repo_type: MSRepoType,
     file_list: list[str],
+    token: str,
 ) -> None:
     """从 ModelScope 仓库中移除文件
 
-    :param api`(HfApi)`: ModelScope Api 实例
     :param repo_id`(str)`: ModelScope 仓库 ID
     :param repo_type`(MSRepoType)`: ModelScope 仓库类型
     :param file_list`(list[str])`: 要从 ModelScope 仓库移除的文件列表
+    :param token`(str)`: ModelScope API Token
     """
     if len(file_list) == 0:
         print("要删除的文件列表为空")
         return
     try:
-        api.delete_files(
+        with ModelScopeGitRepo(
             repo_id=repo_id,
             repo_type=repo_type,
-            delete_patterns=file_list,
-        )
+            token=token,
+        ) as repo:
+            for file in file_list:
+                repo.delete(file)
+            repo.commit("Clean outdated sd portable")
         print(
             f"从 ModelScope 仓库 {repo_id} (类型: {repo_type}) 清理 {len(file_list)} 个过期整合包")
-    except (ValueError, ConnectionError, TypeError) as e:
+    except (ValueError, ConnectionError, TypeError, RuntimeError, OSError) as e:
         print(
             f"从 ModelScope 仓库 {repo_id} (类型: {repo_type}) 清理过期整合包时发送了错误: {e}")
 
@@ -470,10 +1031,10 @@ def main() -> None:
             for i in ms_outdated_portable:
                 print(f"- {i}")
             remove_files_from_ms_repo(
-                api=ms_api,
                 repo_id=ms_repo_id,
                 repo_type=ms_repo_type,
-                file_list=ms_outdated_portable
+                file_list=ms_outdated_portable,
+                token=ms_token,
             )
 
     print("清理过期整合包完成")
