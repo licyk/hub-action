@@ -25,6 +25,7 @@ Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/
 |Build and Test Triton|[![Build and Test Triton](https://github.com/licyk/hub-action/actions/workflows/build-and-test-triton.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-and-test-triton.yml)|
 |Remove LoRA norm block and sync (for InvokeAI)|[![Remove LoRA norm block and sync (for InvokeAI)](https://github.com/licyk/hub-action/actions/workflows/remove-lora-norm-block-and-sync.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/remove-lora-norm-block-and-sync.yml)|
 |Build SageAttention3|[![Build SageAttention3](https://github.com/licyk/hub-action/actions/workflows/build-sageattn3.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sageattn3.yml)|
+|Trigger aria2-next Package Update|[![Trigger aria2-next package update](https://github.com/licyk/hub-action/actions/workflows/trigger-aria2-next-package-update.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/trigger-aria2-next-package-update.yml)|
 
 
 ## 同步仓库教程
