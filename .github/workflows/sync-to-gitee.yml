@@ -52,7 +52,9 @@ jobs:
           "wheels",
           "sd-webui-all-in-one-launcher",
           "python-docstring-checker",
-          "cursor-sheet"
+          "cursor-sheet",
+          "aria2-bin",
+          "aria2-next-bin"
         ]
 
     steps:
