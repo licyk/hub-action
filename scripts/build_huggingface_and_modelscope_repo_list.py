@@ -417,7 +417,7 @@ def main() -> None:
     )
     
     if root_path:
-        output_path = os.path.join(root_path, "repo_list.json")
+        output_path = os.path.join(root_path, "repo_file_list.json")
         save_list_to_json(output_path, repo_data)
         print(f"仓库列表已保存到: {output_path}")
     else:

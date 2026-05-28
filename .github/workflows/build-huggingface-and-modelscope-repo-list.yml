@@ -1,4 +1,4 @@
-name: Build HuggingFace and ModelScope Repo List
+name: Build HF and MS Repo List
 
 on: 
   schedule:
