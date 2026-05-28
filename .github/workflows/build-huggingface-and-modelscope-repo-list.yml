@@ -1,0 +1,105 @@
+name: Build HuggingFace and ModelScope Repo List
+
+on: 
+  schedule:
+  - cron: '10 22 * * *'
+  workflow_dispatch:
+
+jobs:
+  Build-HuggingFace-and-ModelScope-Repo-List:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Config HuggingFace Python Library
+        shell: bash
+        run: |
+          pip install huggingface_hub modelscope
+
+      - name: Build HuggingFace and ModelScope Repo List
+        shell: bash
+        env:
+          ROOT_PATH: ${{ github.workspace }}/artifact
+          HF_REPO_LIST: |
+            licyk/sd-lora:model
+            licyk/sd-vae:model
+            licyk/sd-model:model
+            licyk/sd-embeddings:model
+            licyk/sd-upscaler-models:model
+            licyk/controlnet_v1.1:model
+            licyk/controlnet_v1.1_annotator:model
+            licyk/fooocus-model:model
+            licyk/invokeai-core-model:model
+            licyk/control-lora:model
+            licyk/sd_control_collection:model
+            licyk/sd-extensions-model:model
+            licyk/comfyui-extension-models:model
+            licyk/layerdiffusion:model
+            licyk/invokeai-model:model
+            licyk/sd-3-model:model
+            licyk/sd3_controlnet:model
+            licyk/flux-model:model
+            licyk/flux_controlnet:model
+            licyk/lora_for_invokeai:model
+          MS_REPO_LIST: |
+            licyks/sd-lora:model
+            licyks/sd-vae:model
+            licyks/sd-model:model
+            licyks/sd-embeddings:model
+            licyks/sd-upscaler-models:model
+            licyks/controlnet_v1.1:model
+            licyks/controlnet_v1.1_annotator:model
+            licyks/fooocus-model:model
+            licyks/invokeai-core-model:model
+            licyks/control-lora:model
+            licyks/sd_control_collection:model
+            licyks/sd-extensions-model:model
+            licyks/comfyui-extension-models:model
+            licyks/layerdiffusion:model
+            licyks/invokeai-model:model
+            licyks/sd-3-model:model
+            licyks/sd3_controlnet:model
+            licyks/flux-model:model
+            licyks/flux_controlnet:model
+
+        run: |
+          python "${{ github.workspace }}/scripts/build_huggingface_and_modelscope_repo_list.py"
+
+      - name: Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: page_file
+          path: ${{ github.workspace }}/artifact/
+
+      - name: Configure Git
+        env:
+          DEPLOY_PRI: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+          GIT_USERNAME: ${{ github.repository_owner }}
+          GIT_EMAIL: ${{ github.repository_owner }}@user.github.com
+        run: |
+          sudo timedatectl set-timezone "Asia/Shanghai"
+          mkdir -p ~/.ssh/
+          echo "$DEPLOY_PRI" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global user.name "$GIT_USERNAME"
+          git config --global user.email "$GIT_EMAIL"
+
+      - name: Commit Repo
+        env:
+          GIT_URL: 'git@github.com:licyk/resources.git'
+        run: |
+          git clone "$GIT_URL" "${{ github.workspace }}/repo"
+          git -C "${{ github.workspace }}/repo" checkout gh-pages
+          cp -rf "${{ github.workspace }}/artifact/"* "${{ github.workspace }}/repo/"
+          git -C "${{ github.workspace }}/repo" add -A || true
+          git -C "${{ github.workspace }}/repo" commit -m "Build HuggingFace and ModelScope Repo List. Time: $(date +'%Y-%m-%d %H:%M:%S')" || true
+
+      - name: Push Repo
+        run: |
+          git -C "${{ github.workspace }}/repo" push origin HEAD:gh-pages || true

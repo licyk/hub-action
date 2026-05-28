@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import time
 from functools import wraps
 from collections import namedtuple
@@ -466,4 +467,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    print("已弃用")
+    sys.exit(0)
     main()
