@@ -219,7 +219,7 @@ def preprocess_command(
 def run_cmd(
     command: str | list[str],
     custom_env: dict[str, str] | None = None,
-    live: bool | None = True,
+    live: bool | None = False,
     shell: bool | None = None,
     cwd: Path | None = None,
     check: bool | None = True,
