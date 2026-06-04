@@ -436,6 +436,7 @@ PROTABLE_ALIAS = {
     "fooocus": "Fooocus",
     "invokeai": "InvokeAI",
     "sd_trainer": "SD Trainer",
+    "sd_trainer_next": "SD Trainer Next",
     "kohya_gui": "Kohya GUI",
     "sd_scripts": "SD Scripts",
     "musubi_tuner": "Musubi Tuner",
