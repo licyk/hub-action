@@ -52,6 +52,7 @@ jobs:
             licyks/sd-model:model
             licyks/sd-embeddings:model
             licyks/sd-upscaler-models:model
+            licyks/comfyui-model:model
             licyks/controlnet_v1.1:model
             licyks/controlnet_v1.1_annotator:model
             licyks/fooocus-model:model
