@@ -734,7 +734,7 @@ class ModelScopeGitRepo:
     def _git(
         self,
         args: list[str],
-        live: bool | None = True,
+        live: bool | None = False,
         check: bool | None = True,
         sensitive_values: list[str] | tuple[str, ...] | None = None,
     ) -> str | None:
