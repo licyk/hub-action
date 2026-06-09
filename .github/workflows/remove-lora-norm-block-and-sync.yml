@@ -15,7 +15,7 @@ jobs:
   Remove-LoRA-Norm-Block-And-Sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Config HuggingFace And ModelScope Python Library
         shell: bash

@@ -12,7 +12,7 @@ jobs:
   Build-SD-Portable-Download-Link:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: List files in the repository
         run: |
           echo "inputs.pytorch_version: ${{ inputs.pytorch_version }}"

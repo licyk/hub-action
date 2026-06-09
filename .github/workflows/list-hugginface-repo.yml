@@ -15,7 +15,7 @@ jobs:
   List-HuggingFace-Repo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: List files in the repository
         run: |
           cd "${{ github.workspace }}"
