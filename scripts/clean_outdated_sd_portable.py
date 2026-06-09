@@ -27,6 +27,7 @@ from typing import (
     Callable,
     TypeVar,
     ParamSpec,
+    TypeAlias,
     cast,
 )
 from pathlib import Path
@@ -54,13 +55,15 @@ def retryable(
     describe: str | None = None,
     catch_exceptions: type[Exception] | tuple[type[Exception], ...] = Exception,
     raise_exception: type[Exception] = RuntimeError,
-    retry_on_none: bool | None = False,
+    retry_on_none: bool = False,
 ) -> Callable[[Callable[P, T | None]], Callable[..., T]]:
     """通用的重试装饰器
 
     该装饰器会为原函数注入以下参数:
-        - retry_times (int | None): 重试次数
-        - retry_delay (float | None): 重试延迟
+        - **retry_times** *(int | None)*:
+            重试次数
+        - **retry_delay** *(float | None)*:
+            重试延迟
 
     Args:
         times (int | None):
@@ -73,7 +76,7 @@ def retryable(
             需要捕获并触发重试的异常类型
         raise_exception (type[Exception]):
             超过重试次数后抛出的异常类型
-        retry_on_none (bool | None):
+        retry_on_none (bool):
             是否在返回 None 时触发重试
 
     Returns:
@@ -84,16 +87,16 @@ def retryable(
     def decorator(func: Callable[P, T | None]) -> Callable[..., T]:
         @wraps(func)
         def wrapper(
-            *args: P.args,
+            *args: Any,
             retry_times: int | None = None,
             retry_delay: float | None = None,
-            **kwargs: P.kwargs,
+            **kwargs: Any,
         ) -> T:
-            actual_times = retry_times if retry_times is not None else times
-            actual_delay = retry_delay if retry_delay is not None else delay
+            actual_times = retry_times if retry_times is not None else (times if times is not None else 0)
+            actual_delay = retry_delay if retry_delay is not None else (delay if delay is not None else 0)
             count = 0
             err = None
-            target_info = describe if describe is not None else func.__name__
+            target_info = describe if describe is not None else getattr(func, "__name__", repr(func))
             if isinstance(catch_exceptions, tuple):
                 catch_exc = catch_exceptions + (RetrySignalError,)
             else:
@@ -111,28 +114,20 @@ def retryable(
                 except catch_exc as e:  # pylint: disable=catching-non-exception
                     err = e
                     # 判断是否是内部信号触发的
-                    error_msg = (
-                        str(e)
-                        if isinstance(e, RetrySignalError)
-                        else f"{type(e).__name__}: {e}"
-                    )
-                    print(
-                        f"[{count}/{actual_times}] {target_info} 出现错误: {error_msg}"
-                    )
+                    error_msg = str(e) if isinstance(e, RetrySignalError) else f"{type(e).__name__}: {e}"
+                    logger.error("[%s/%s] %s 出现错误: %s", count, actual_times, target_info, error_msg)
 
                     if count < actual_times:
-                        print(f"[{count}/{actual_times}] 重试 {target_info} 中")
+                        logger.warning("[%s/%s] 重试 %s 中", count, actual_times, target_info)
                         if actual_delay > 0:
                             time.sleep(actual_delay)
                     else:
                         # 达到重试上限, 抛出指定的异常
-                        raise raise_exception(
-                            f"执行 '{target_info}' 时发生错误: {err}"
-                        ) from err
+                        raise raise_exception(f"执行 '{target_info}' 时发生错误: {err}") from err
 
                 except Exception as e:  # pylint: disable=duplicate-except
                     # 如果出现了不在 catch_exceptions 列表中的异常, 立即抛出, 不重试
-                    print(f"[{count}/{actual_times}] 遇到不可重试的致命错误: {e}")
+                    logger.critical("[%s/%s] 遇到不可重试的致命错误: %s", count, actual_times, e)
                     raise
 
             # 正常情况下逻辑在循环内结束, 这里作为兜底抛出
@@ -559,11 +554,23 @@ def parse_portable_filename(filename: str) -> PortableNameComponent:
     )
 
 
+# 仓库类型
+RepoType: TypeAlias = Literal["model", "dataset", "space"]
+REPO_TYPES: tuple[RepoType, ...] = ("model", "dataset", "space")
+
 # HuggingFace 仓库类型
-HFRepoType = Literal["model", "dataset", "space"]
+HFRepoType: TypeAlias = RepoType
 
 # ModelScope 仓库类型
-MSRepoType = Literal["model", "dataset", "space"]
+MSRepoType: TypeAlias = RepoType
+
+
+def get_env_repo_type(env_name: str) -> RepoType:
+    repo_type = os.getenv(env_name, "model")
+    if repo_type not in REPO_TYPES:
+        raise ValueError(f"{env_name} 必须是以下值之一: {', '.join(REPO_TYPES)}")
+
+    return cast(RepoType, repo_type)
 
 
 class ModelScopeGitRepo:
@@ -606,6 +613,7 @@ class ModelScopeGitRepo:
                 sensitive_values=self._sensitive_values(),
             )
             self._git(["lfs", "install", "--local"])
+            self._configure_lfs_locksverify()
             self._ensure_git_identity()
             return self
         except Exception:
@@ -745,6 +753,21 @@ class ModelScopeGitRepo:
             for value in [self.token, self._git_token, self._repo_url]
             if value
         ]
+
+    def _configure_lfs_locksverify(self) -> None:
+        if self._repo_url is None:
+            raise RuntimeError("ModelScope Git 仓库 URL 尚未初始化")
+
+        self._git(
+            [
+                "config",
+                "--local",
+                f"lfs.{self._repo_url}/info/lfs.locksverify",
+                "true",
+            ],
+            live=False,
+            sensitive_values=self._sensitive_values(),
+        )
 
     def _ensure_git_identity(self) -> None:
         name = self._git(["config", "user.name"], live=False, check=False)
@@ -991,9 +1014,9 @@ def main() -> None:
     hf_token = os.getenv("HF_TOKEN")
     ms_token = os.getenv("MODELSCOPE_API_TOKEN")
     hf_repo_id = os.getenv("HF_REPO_ID")
-    hf_repo_type = os.getenv("HF_REPO_TYPE", "model")
+    hf_repo_type = get_env_repo_type("HF_REPO_TYPE")
     ms_repo_id = os.getenv("MS_REPO_ID")
-    ms_repo_type = os.getenv("MS_REPO_TYPE", "model")
+    ms_repo_type = get_env_repo_type("MS_REPO_TYPE")
     day_threshold = int(os.getenv("DAY_THRESHOLD", "60"))
 
     if hf_token and hf_repo_id:
