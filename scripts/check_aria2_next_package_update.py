@@ -21,6 +21,7 @@ TARGET_SUFFIXES = [
     "macos-arm64",
     "windows-x86_64.exe",
     "windows-arm64.exe",
+    "android-arm64",
 ]
 
 WHEEL_NAMES = [
@@ -30,6 +31,7 @@ WHEEL_NAMES = [
     "aria2_next-{version}-py3-none-macosx_11_0_arm64.whl",
     "aria2_next-{version}-py3-none-win_amd64.whl",
     "aria2_next-{version}-py3-none-win_arm64.whl",
+    "aria2_next-{version}-py3-none-android_21_arm64_v8a.whl"
 ]
 
 
