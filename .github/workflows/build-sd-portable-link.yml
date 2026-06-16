@@ -27,7 +27,7 @@ jobs:
         shell: bash
         env:
           ROOT_PATH: ${{ github.workspace }}/artifact/
-          REPO_ID: licyks/sdnote
+          REPO_ID: licyks/sd-webui-all-in-one
           REPO_TYPE: model
         run: |
           python "${{ github.workspace }}/scripts/build_sd_portable_download_link.py"
