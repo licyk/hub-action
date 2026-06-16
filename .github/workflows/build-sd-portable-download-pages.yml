@@ -18,21 +18,22 @@ jobs:
           cd "${{ github.workspace }}"
           ls "${{ github.workspace }}"
 
-      - name: Config HuggingFace Python Library
+      - name: Install SD WebUI All In One
         shell: bash
         run: |
-          pip install huggingface_hub modelscope requests --break-system-package
+          python -m venv "${{ github.workspace }}/.venv"
+          "${{ github.workspace }}/.venv/bin/python" -m pip install --upgrade pip
+          "${{ github.workspace }}/.venv/bin/python" -m pip install "sd-webui-all-in-one[models]"
 
       - name: Build SD Portable Download Page
         shell: bash
-        env:
-          ROOT_PATH: ${{ github.workspace }}/artifact
-          HF_REPO_ID: licyk/sdnote
-          HF_REPO_TYPE: model
-          MS_REPO_ID: licyks/sdnote
-          MS_REPO_TYPE: model
         run: |
-          python "${{ github.workspace }}/scripts/build_sd_portable_download_page.py"
+          "${{ github.workspace }}/.venv/bin/python" -m sd_webui_all_in_one self-manager portable list \
+            --output "${{ github.workspace }}/artifact/portable_list.json" \
+            --hf-repo-id "licyk/sdnote" \
+            --hf-repo-type "model" \
+            --ms-repo-id "licyks/sdnote" \
+            --ms-repo-type "model"
 
       - name: Artifact
         uses: actions/upload-artifact@v4
