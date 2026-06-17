@@ -25,10 +25,20 @@ jobs:
     Clean-HF-Repo-Space:
         runs-on: ubuntu-latest
         steps:
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                python-version: '3.x'
+
+            - name: Setup uv
+              uses: astral-sh/setup-uv@v8
+
             - name: Config HuggingFace Python Library
               shell: bash
+              env:
+                UV_SYSTEM_PYTHON: 1
               run: |
-                pip install "huggingface_hub[cli]" --break-system-package
+                uv pip install "huggingface_hub[cli]"
 
             - name: Clean HuggingFace Repo Space
               shell: python

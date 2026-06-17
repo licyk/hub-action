@@ -17,10 +17,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8
+
       - name: Config HuggingFace And ModelScope Python Library
         shell: bash
+        env:
+          UV_SYSTEM_PYTHON: 1
         run: |
-          pip install huggingface_hub hf_xet safetensors torch tqdm numpy
+          uv pip install huggingface_hub hf_xet safetensors torch tqdm numpy
 
       - name: Remove LoRA norm block and sync (for InvokeAI)
         shell: bash

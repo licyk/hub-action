@@ -15,14 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: List files in the repository
-        run: |
-          ls "${{ github.workspace }}"
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8
 
       - name: Config HuggingFace Python Library
         shell: bash
+        env:
+          UV_SYSTEM_PYTHON: 1
         run: |
-          pip install huggingface_hub modelscope requests --break-system-package
+          uv pip install huggingface_hub modelscope requests
+
+      - name: List files in the repository
+        run: |
+          ls "${{ github.workspace }}"
 
       - name: Sync flash_attn wheel to repository
         shell: bash
@@ -32,4 +42,3 @@ jobs:
           MODELSCOPE_API_TOKEN: ${{ secrets.MODELSCOPE_API_TOKEN }}
         run: |
           python "${{ github.workspace }}/scripts/sync_flash_attn_whl.py"
-

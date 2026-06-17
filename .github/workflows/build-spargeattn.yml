@@ -65,6 +65,8 @@ jobs:
         with:
           python-version: '3.12'
 
+      - uses: astral-sh/setup-uv@v8
+
       - uses: Jimver/cuda-toolkit@v0.2.29
         with:
           cuda: ${{ inputs.cuda_major }}.${{ inputs.cuda_minor }}.${{ inputs.cuda_patch }}
@@ -75,6 +77,8 @@ jobs:
       - name: Build wheel
         shell: powershell
         continue-on-error: true
+        env:
+          UV_SYSTEM_PYTHON: 1
         run: |
           # Get-ChildItem Env:
           # (Get-WmiObject Win32_Processor).Name
@@ -83,8 +87,7 @@ jobs:
 
           # Get-Command -All python
           # python --version
-          python -m pip install --upgrade pip
-          pip install --upgrade cibuildwheel simpleindex
+          uv pip install --upgrade cibuildwheel simpleindex
 
           git config --global core.autocrlf false
           git clone --branch ${{ inputs.git_tag }} --depth 1 https://github.com/woct0rdho/SpargeAttn.git
@@ -121,7 +124,7 @@ jobs:
           $Env:CIBW_BUILD_VERBOSITY = "1"
           # Sometimes torch may conflict with cibuildwheel's pinned dependency versions
           # $Env:CIBW_DEPENDENCY_VERSIONS = "latest"
-          cibuildwheel .
+          python -m cibuildwheel .
 
       - uses: actions/upload-artifact@v4
         with:

@@ -54,10 +54,20 @@ jobs:
     Sync-HF-Or-MS-Repo:
         runs-on: ubuntu-latest
         steps:
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                python-version: '3.x'
+
+            - name: Setup uv
+              uses: astral-sh/setup-uv@v8
+
             - name: Config HuggingFace / ModelScope Python Library
               shell: bash
+              env:
+                UV_SYSTEM_PYTHON: 1
               run: |
-                pip install "huggingface_hub[cli]" modelscope --break-system-package
+                uv pip install "huggingface_hub[cli]" modelscope
 
             - name: Sync HuggingFace Repo To ModelScope Repo
               shell: bash

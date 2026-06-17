@@ -13,15 +13,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8
+
+      - name: Config HuggingFace Python Library
+        shell: bash
+        env:
+          UV_SYSTEM_PYTHON: 1
+        run: |
+          uv pip install huggingface_hub modelscope requests
+
       - name: List files in the repository
         run: |
           echo "inputs.pytorch_version: ${{ inputs.pytorch_version }}"
           ls "${{ github.workspace }}"
-
-      - name: Config HuggingFace Python Library
-        shell: bash
-        run: |
-          pip install huggingface_hub modelscope requests --break-system-package
 
       - name: Build SD Portable Download Link
         shell: bash

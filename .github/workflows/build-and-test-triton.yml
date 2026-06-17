@@ -28,30 +28,28 @@ jobs:
     # runs-on: windows-a10
     runs-on: windows-latest
     steps:
-      - name: Create venv
-        shell: powershell
-        run: |
-          pip install --upgrade uv
-          uv venv .venv-cp3${{ inputs.python_minor }} --python 3.${{ inputs.python_minor }}
-          .venv-cp3${{ inputs.python_minor }}\Scripts\activate.ps1
-          python -m ensurepip --upgrade
-          python -m pip install --upgrade pip
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.${{ inputs.python_minor }}'
+
+      - uses: astral-sh/setup-uv@v8
 
       - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build wheel
         shell: powershell
         continue-on-error: true
+        env:
+          UV_SYSTEM_PYTHON: 1
         run: |
           # Get-ChildItem Env:
           # (Get-WmiObject Win32_Processor).Name
           # (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum / 1GB
           # (Get-WmiObject Win32_VideoController).Name
 
-          .venv-cp3${{ inputs.python_minor }}\Scripts\activate.ps1
           # Get-Command -All python
           # python --version
-          python -m pip install --upgrade cibuildwheel
+          uv pip install --upgrade cibuildwheel
 
           git config --global core.autocrlf false
           if (Test-Path -Path triton-windows)
@@ -78,11 +76,11 @@ jobs:
           rm wheelhouse/*
           if (Test-Path -Path setup.py)
           {
-            cibuildwheel .
+            python -m cibuildwheel .
           }
           else
           {
-            cibuildwheel python
+            python -m cibuildwheel python
           }
 
       - uses: actions/upload-artifact@v4
@@ -91,12 +89,13 @@ jobs:
 
       - name: Unit test
         shell: powershell
+        env:
+          UV_SYSTEM_PYTHON: 1
         run: |
-          .venv-cp3${{ inputs.python_minor }}\Scripts\activate.ps1
-          python -m pip install --upgrade numpy pytest-xdist scipy
-          python -m pip install --pre --upgrade 'torch<2.8' --index-url https://download.pytorch.org/whl/nightly/cu128
+          uv pip install --upgrade numpy pytest-xdist scipy
+          uv pip install --pre --upgrade 'torch<2.8' --index-url https://download.pytorch.org/whl/nightly/cu128
           cd triton-windows/wheelhouse
-          python -m pip install $(Get-ChildItem | Select-Object -First 1)
+          uv pip install $(Get-ChildItem | Select-Object -First 1)
           rm -r ~/.triton/cache
           cd ../python/test/unit
-          pytest ${{ inputs.pytest_args }}
+          python -m pytest ${{ inputs.pytest_args }}
