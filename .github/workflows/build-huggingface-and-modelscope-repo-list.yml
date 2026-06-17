@@ -2,7 +2,7 @@ name: Build HF and MS Repo List
 
 on: 
   schedule:
-  - cron: '10 22 * * *'
+  - cron: '10 20 * * *'
   workflow_dispatch:
 
 jobs:
