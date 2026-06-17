@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: '3.${{ inputs.python_minor }}'
 
-      - uses: astral-sh/setup-uv@v8
+      - uses: astral-sh/setup-uv@v8.1.0
 
       - uses: ilammy/msvc-dev-cmd@v1
 
