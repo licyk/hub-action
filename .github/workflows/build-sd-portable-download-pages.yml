@@ -18,17 +18,19 @@ jobs:
           cd "${{ github.workspace }}"
           ls "${{ github.workspace }}"
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
       - name: Install SD WebUI All In One
         shell: bash
         run: |
-          python -m venv "${{ github.workspace }}/.venv"
-          "${{ github.workspace }}/.venv/bin/python" -m pip install --upgrade pip
-          "${{ github.workspace }}/.venv/bin/python" -m pip install "sd-webui-all-in-one[models]"
+          python -m pip install "sd-webui-all-in-one[models]"
 
       - name: Build SD Portable Download Page
         shell: bash
         run: |
-          "${{ github.workspace }}/.venv/bin/python" -m sd_webui_all_in_one self-manager portable list \
+          python -m sd_webui_all_in_one self-manager portable list \
             --output "${{ github.workspace }}/artifact/portable_list.json" \
             --hf-repo-id "licyk/sd-webui-all-in-one" \
             --hf-repo-type "model" \
