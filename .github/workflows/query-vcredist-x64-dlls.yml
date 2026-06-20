@@ -45,13 +45,81 @@ jobs:
           python3 -m json.tool "$RESULT_DIR/vcredist-x64-dlls.json" \
             > "$RESULT_DIR/vcredist-x64-dlls.pretty.json"
 
-          {
-            echo "## VCRedist x64 DLL Query"
-            echo
-            echo "- Result: \`artifact/vcredist-x64-dlls.json\`"
-            echo "- URL: \`${VCREDIST_URL:-default Microsoft Learn x64 permalink}\`"
-            echo "- Default download URL source: $DEFAULT_DOWNLOAD_URL_SOURCE"
-          } >> "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          result_dir = Path(os.environ["RESULT_DIR"])
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          data = json.loads((result_dir / "vcredist-x64-dlls.json").read_text(encoding="utf-8"))
+
+          def md(value):
+            if value is None or value == "":
+              return "N/A"
+            return str(value).replace("\n", " ").replace("|", "\\|")
+
+          def row(name, value):
+            return f"| {md(name)} | {md(value)} |"
+
+          lines = [
+            "## VCRedist x64 DLL Query",
+            "",
+            "### Result Files",
+            "",
+            "| File | Description |",
+            "|---|---|",
+            "| `artifact/vcredist-x64-dlls.json` | Raw machine-readable result |",
+            "| `artifact/vcredist-x64-dlls.pretty.json` | Pretty-printed JSON result |",
+            "",
+            "### Download Source",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+            row("Workflow input URL", os.environ.get("VCREDIST_URL") or "default Microsoft Learn x64 permalink"),
+            row("Download URL", data.get("downloadUrl") or data.get("sourceUrl")),
+            row("Download URL source", data.get("downloadUrlSource")),
+            row("Download URL source page", data.get("downloadUrlSourceUrl")),
+            row("Default download URL", data.get("defaultDownloadUrl")),
+            row("Default download URL source", data.get("defaultDownloadUrlSource")),
+            row("Default download URL source page", data.get("defaultDownloadUrlSourceUrl")),
+            "",
+            "### Package",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+            row("Package version", data.get("packageVersion")),
+            row("File version", data.get("fileVersion")),
+            row("Total DLL files", data.get("totalFiles")),
+            row("Attached container offset", data.get("attachedContainerOffset")),
+            row("Attached container file size", data.get("attachedContainerFileSize")),
+            row("Attached container extra bytes", data.get("attachedContainerExtraBytes")),
+            row("Minimum runtime MSI payload", data.get("payloads", {}).get("minimumRuntimeMsi")),
+            row("Additional runtime MSI payload", data.get("payloads", {}).get("additionalRuntimeMsi")),
+            "",
+          ]
+
+          def append_dll_table(group_name):
+            dlls = [item for item in data.get("dlls", []) if item.get("group") == group_name]
+            lines.extend([
+              f"### {group_name} DLLs ({len(dlls)})",
+              "",
+              "| Name | Version | File size |",
+              "|---|---|---:|",
+            ])
+            for item in dlls:
+              lines.append(
+                f"| `{md(item.get('name'))}` | {md(item.get('version'))} | {md(item.get('fileSize'))} |"
+              )
+            lines.append("")
+
+          append_dll_table("Minimum Runtime")
+          append_dll_table("Additional Runtime")
+
+          with summary_path.open("a", encoding="utf-8") as summary:
+            summary.write("\n".join(lines))
+            summary.write("\n")
+          PY
 
       - name: Artifact
         uses: actions/upload-artifact@v4
