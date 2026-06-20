@@ -1,0 +1,60 @@
+name: Query VCRedist x64 DLLs
+
+on:
+  schedule:
+    - cron: "20 21 * * 0"
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "VC_redist.x64.exe download URL. Leave empty to use the Microsoft Learn x64 permalink."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  query-vcredist-x64-dlls:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full cabextract msitools
+
+      - name: Query VCRedist x64 DLLs
+        shell: bash
+        env:
+          VCREDIST_URL: ${{ github.event.inputs.url || '' }}
+          DEFAULT_DOWNLOAD_URL_SOURCE: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-supported-redistributable-version
+          RESULT_DIR: ${{ github.workspace }}/artifact
+        run: |
+          mkdir -p "$RESULT_DIR"
+
+          args=(--format json)
+          if [[ -n "$VCREDIST_URL" ]]; then
+            args+=(--url "$VCREDIST_URL")
+          fi
+
+          bash "${{ github.workspace }}/scripts/query_vcredist_x64_dlls.sh" "${args[@]}" \
+            > "$RESULT_DIR/vcredist-x64-dlls.json"
+
+          python3 -m json.tool "$RESULT_DIR/vcredist-x64-dlls.json" \
+            > "$RESULT_DIR/vcredist-x64-dlls.pretty.json"
+
+          {
+            echo "## VCRedist x64 DLL Query"
+            echo
+            echo "- Result: \`artifact/vcredist-x64-dlls.json\`"
+            echo "- URL: \`${VCREDIST_URL:-default Microsoft Learn x64 permalink}\`"
+            echo "- Default download URL source: $DEFAULT_DOWNLOAD_URL_SOURCE"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcredist-x64-dlls
+          path: ${{ github.workspace }}/artifact/

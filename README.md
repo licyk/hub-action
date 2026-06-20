@@ -27,6 +27,9 @@ Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/
 |Build SageAttention3|[![Build SageAttention3](https://github.com/licyk/hub-action/actions/workflows/build-sageattn3.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sageattn3.yml)|
 |Trigger aria2-next Package Update|[![Trigger aria2-next package update](https://github.com/licyk/hub-action/actions/workflows/trigger-aria2-next-package-update.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/trigger-aria2-next-package-update.yml)|
 |Build HF and MS Repo List|[![Build HF and MS Repo List](https://github.com/licyk/hub-action/actions/workflows/build-huggingface-and-modelscope-repo-list.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-huggingface-and-modelscope-repo-list.yml)|
+|Query VCRedist x64 DLLs|[![Query VCRedist x64 DLLs](https://github.com/licyk/hub-action/actions/workflows/query-vcredist-x64-dlls.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/query-vcredist-x64-dlls.yml)|
+
+VCRedist x64 DLL 查询默认下载链接来源：[Microsoft Visual C++ Redistributable latest supported downloads](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-supported-redistributable-version)
 
 
 ## 同步仓库教程
