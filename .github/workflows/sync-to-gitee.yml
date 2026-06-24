@@ -22,7 +22,7 @@ jobs:
           "hub-action",
           "cursors-archive",
           "psh2bat",
-          "ani2xcur-cli",
+          "ani2xcur-tui",
           "repo_mirror_tools",
           "ani2xcur",
           "sd-webui-all-in-one",
