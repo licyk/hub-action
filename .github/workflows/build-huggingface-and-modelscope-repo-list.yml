@@ -24,7 +24,7 @@ jobs:
         env:
           UV_SYSTEM_PYTHON: 1
         run: |
-          uv pip install huggingface_hub modelscope
+          uv pip install "sd-webui-all-in-one[models]"
 
       - name: Build HuggingFace and ModelScope Repo List
         shell: bash

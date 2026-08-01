@@ -5,121 +5,21 @@ import time
 from functools import wraps
 from collections import namedtuple
 from typing import (
-    Union,
     Literal,
     Callable,
     TypeVar,
     ParamSpec,
     cast,
+    TypeAlias,
 )
 from pathlib import Path
 
-from modelscope.hub.api import HubApi
+from sd_webui_all_in_one.retry_decorator import retryable
+from sd_webui_all_in_one.repo_manager import RepoManager
 
 
-T = TypeVar("T")
-P = ParamSpec("P")
-
-
-class RetrySignalError(Exception):
-    """仅供装饰器内部使用的重试信号异常"""
-
-    pass  # pylint: disable=unnecessary-pass
-
-
-def retryable(
-    times: int | None = 3,
-    delay: float | None = 1.0,
-    describe: str | None = None,
-    catch_exceptions: type[Exception] | tuple[type[Exception], ...] = Exception,
-    raise_exception: type[Exception] = RuntimeError,
-    retry_on_none: bool | None = False,
-) -> Callable[[Callable[P, T | None]], Callable[..., T]]:
-    """通用的重试装饰器
-
-    该装饰器会为原函数注入以下参数:
-        - retry_times (int | None): 重试次数
-        - retry_delay (float | None): 重试延迟
-
-    Args:
-        times (int | None):
-            最大重试次数
-        delay (float | None):
-            失败后的延迟时间 (秒)
-        describe (str | None):
-            日志中显示的描述文字
-        catch_exceptions (type[Exception] | tuple[type[Exception], ...]):
-            需要捕获并触发重试的异常类型
-        raise_exception (type[Exception]):
-            超过重试次数后抛出的异常类型
-        retry_on_none (bool | None):
-            是否在返回 None 时触发重试
-
-    Returns:
-        (Callable[[Callable[P, T | None]], Callable[..., T]]):
-            装饰器函数
-    """
-
-    def decorator(func: Callable[P, T | None]) -> Callable[..., T]:
-        @wraps(func)
-        def wrapper(
-            *args: P.args,
-            retry_times: int | None = None,
-            retry_delay: float | None = None,
-            **kwargs: P.kwargs,
-        ) -> T:
-            actual_times = retry_times if retry_times is not None else times
-            actual_delay = retry_delay if retry_delay is not None else delay
-            count = 0
-            err = None
-            target_info = describe if describe is not None else func.__name__
-            if isinstance(catch_exceptions, tuple):
-                catch_exc = catch_exceptions + (RetrySignalError,)
-            else:
-                catch_exc = (catch_exceptions, RetrySignalError)
-
-            while count < actual_times:
-                count += 1
-                try:
-                    result = func(*args, **kwargs)
-                    if retry_on_none and result is None:
-                        # 如果返回 None 且启用了检查, 则手动抛出异常触发下面的 except
-                        raise ValueError(f"'{target_info}' 返回结果为空")
-
-                    return cast(T, result)
-                except catch_exc as e:  # pylint: disable=catching-non-exception
-                    err = e
-                    # 判断是否是内部信号触发的
-                    error_msg = (
-                        str(e)
-                        if isinstance(e, RetrySignalError)
-                        else f"{type(e).__name__}: {e}"
-                    )
-                    print(
-                        f"[{count}/{actual_times}] {target_info} 出现错误: {error_msg}"
-                    )
-
-                    if count < actual_times:
-                        print(f"[{count}/{actual_times}] 重试 {target_info} 中")
-                        if actual_delay > 0:
-                            time.sleep(actual_delay)
-                    else:
-                        # 达到重试上限, 抛出指定的异常
-                        raise raise_exception(
-                            f"执行 '{target_info}' 时发生错误: {err}"
-                        ) from err
-
-                except Exception as e:  # pylint: disable=duplicate-except
-                    # 如果出现了不在 catch_exceptions 列表中的异常, 立即抛出, 不重试
-                    print(f"[{count}/{actual_times}] 遇到不可重试的致命错误: {e}")
-                    raise
-
-            # 正常情况下逻辑在循环内结束, 这里作为兜底抛出
-            raise raise_exception(f"执行 '{target_info}' 最终失败")
-
-        return cast(Callable[..., T], wrapper)
-
-    return decorator
+RepoFile: TypeAlias = tuple[str, str]
+PortableRelease: TypeAlias = tuple[str, str, str]
 
 
 # 解析整合包文件名的正则表达式
@@ -208,54 +108,31 @@ def parse_portable_filename(filename: str) -> PortableNameComponent:
 def get_modelscope_repo_file(
     repo_id: str,
     repo_type: Literal["model", "dataset", "space"],
-) -> list[str, str]:
+) -> list[tuple[str, str]]:
     '''从 ModelScope 仓库获取文件列表
 
     :param repo_id`(str)`: 仓库 ID
     :param repo_type`(str)`: 仓库种类 (model/dataset/space)
     :return `list[str,str]`: 仓库文件列表 `[<路径>, <链接>]`
     '''
-    api = HubApi()
-    file_list = []
-    file_list_url = []
-
-    def _get_file_path(repo_files: list) -> list:
-        file_list = []
-        for file in repo_files:
-            if file["Type"] != "tree":
-                file_list.append(file["Path"])
-        return file_list
-
-    if repo_type == "model":
-        print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表")
-        repo_files = api.get_model_files(model_id=repo_id, recursive=True)
-        file_list = _get_file_path(repo_files)
-    elif repo_type == "dataset":
-        print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表")
-        repo_files = api.get_dataset_files(
-            repo_id=repo_id,
-            recursive=True
+    repo_manager = RepoManager()
+    repo_files = repo_manager.get_repo_file(
+        api_type="modelscope",
+        repo_id=repo_id,
+        repo_type=repo_type,
+    )
+    return [
+        (
+            file_path,
+            repo_manager.get_repo_file_download_url(
+                api_type="modelscope",
+                repo_id=repo_id,
+                file_path=file_path,
+                repo_type=repo_type,
+            ),
         )
-        file_list = _get_file_path(repo_files)
-    elif repo_type == "space":
-        print(f"{repo_id} 仓库类型为创空间, 不支持获取文件列表")
-        return file_list_url
-    else:
-        raise ValueError(f"未知的 {repo_type} 仓库类型")
-
-    for i in file_list:
-        if repo_type == "model":
-            url = f"https://modelscope.cn/models/{repo_id}/resolve/master/{i}"
-        elif repo_type == "dataset":
-            url = f"https://modelscope.cn/datasets/{repo_id}/resolve/master/{i}"
-        elif repo_type == "space":
-            url = f"https://modelscope.cn/studio/{repo_id}/resolve/master/{i}"
-        else:
-            raise ValueError(f"错误的 ModelScope 仓库类型: {repo_type}")
-
-        file_list_url.append([i, url])
-
-    return file_list_url
+        for file_path in repo_files
+    ]
 
 
 def build_download_page(filename: str, url: str) -> str:
@@ -284,7 +161,7 @@ def build_download_page(filename: str, url: str) -> str:
     return html_string
 
 
-def write_content_to_file(content: list, path: Union[str, Path]) -> None:
+def write_content_to_file(content: list[str], path: str | Path) -> None:
     if len(content) == 0:
         return
 
@@ -299,41 +176,41 @@ def write_content_to_file(content: list, path: Union[str, Path]) -> None:
             f.write(item + "\n")
 
 
-def filter_portable_file(file_list: list[str, str]) -> list[str, str]:
+def filter_portable_file(file_list: list[RepoFile]) -> list[RepoFile]:
     '''从仓库列表中筛选出整合包列表
 
     :param file_list`(list[str,str])`: 仓库文件列表 `[<路径>, <链接>]`
     :return `(list[str,str])`: 整合包文件列表 `[<路径>, <链接>]`
     '''
-    fitter_file_list = []
+    fitter_file_list: list[RepoFile] = []
     for file, url in file_list:
         filename = os.path.basename(file)
         if file.startswith("portable/"):
             try:
                 _ = parse_portable_filename(filename)
-                fitter_file_list.append([file, url])
+                fitter_file_list.append((file, url))
             except Exception as e: # pylint: disable=broad-exception-caught
                 print(f"{file} 文件名不符合规范: {e}")
 
     return fitter_file_list
 
 
-def split_release_list(file_list: list[str, str]) -> Union[list[str, str], list[str, str]]:
+def split_release_list(file_list: list[RepoFile]) -> tuple[list[RepoFile], list[RepoFile]]:
     '''从整合包列表按发行类型 (stable/nightly) 进行分类
 
     :param file_list`(list[str,str])`: 仓库文件列表 `[<路径>, <链接>]`
     :return `list[str,str],list[str,str]`: stale 类型文件列表和 nightly 类型文件列表
     '''
-    stable_list = []
-    nightly_list = []
+    stable_list: list[RepoFile] = []
+    nightly_list: list[RepoFile] = []
     for file, url in file_list:
         filename = os.path.basename(file)
         portable = parse_portable_filename(filename)
         if portable.build_type == "stable":
-            stable_list.append([file, url])
+            stable_list.append((file, url))
 
         if portable.build_type == "nightly":
-            nightly_list.append([file, url])
+            nightly_list.append((file, url))
 
     return stable_list, nightly_list
 
@@ -379,8 +256,8 @@ def compare_versions(version1: str, version2: str) -> int:
 
 
 def find_latest_package(
-    package_list: list[str, str]
-) -> tuple[list[str, str, str], list[str, str, str]]:
+    package_list: list[RepoFile],
+) -> tuple[list[PortableRelease], list[PortableRelease]]:
     '''查找最新版本的整合包
 
     :param package_list`(list[str,str])`: 整合包列表 `[<路径>, <链接>]`
@@ -388,52 +265,50 @@ def find_latest_package(
 
     整合包列表为 `[<稳定版整合包名>, <路径>, <链接>], [<每日构建版整合包名>, <路径>, <链接>]`
     '''
-    portable_type = set()
-    stable_portable = []
-    nightly_portable = []
+    portable_types: set[str] = set()
+    stable_portable: list[PortableRelease] = []
+    nightly_portable: list[PortableRelease] = []
 
     # 提取所有整合包的名字
     for file, _ in package_list:
         filename = os.path.basename(file)
-        portable_type.add(parse_portable_filename(filename).software)
-
-    portable_type = sorted(list(portable_type))
+        portable_types.add(parse_portable_filename(filename).software)
 
     # 根据整合包名字分组查找最新的版本
-    for p_type in portable_type:
-        tmp = []
+    for p_type in sorted(portable_types):
+        tmp: list[RepoFile] = []
 
         # 筛选出同一个类型的整合包
         for file, url in package_list:
             filename = os.path.basename(file)
             portable = parse_portable_filename(filename)
             if portable.software == p_type:
-                tmp.append([file, url])
+                tmp.append((file, url))
 
         # 找出版本最高的整合包 (stable)
         max_version = "0.0"
-        latest_stable_portable = [p_type, "", ""]
+        latest_stable_portable: PortableRelease = (p_type, "", "")
         for file, url in tmp:
             filename = os.path.basename(file)
             portable = parse_portable_filename(filename)
             if portable.version is None:
                 continue
             if compare_versions(portable.version, max_version) > 0:
-                latest_stable_portable = [p_type, file, url]
+                latest_stable_portable = (p_type, file, url)
 
         if latest_stable_portable[1] and latest_stable_portable[2]:
             stable_portable.append(latest_stable_portable)
 
         # 找出版本最高的整合包 (nightly)
         max_version = "00000000"
-        latest_nightly_portable = [p_type, "", ""]
+        latest_nightly_portable: PortableRelease = (p_type, "", "")
         for file, url in tmp:
             filename = os.path.basename(file)
             portable = parse_portable_filename(filename)
             if portable.build_date is None:
                 continue
             if compare_versions(portable.build_date, max_version) > 0:
-                latest_nightly_portable = [p_type, file, url]
+                latest_nightly_portable = (p_type, file, url)
 
         if latest_nightly_portable[1] and latest_nightly_portable[2]:
             nightly_portable.append(latest_nightly_portable)
@@ -443,9 +318,11 @@ def find_latest_package(
 
 def main() -> None:
     '''主函数'''
-    root_path = os.environ.get("ROOT_PATH")
-    repo_id = os.environ.get("REPO_ID")
-    repo_type = os.environ.get("REPO_TYPE")
+    root_path = os.environ["ROOT_PATH"]
+    repo_id = os.environ["REPO_ID"]
+    repo_type = os.environ["REPO_TYPE"]
+    if repo_type not in ("model", "dataset", "space"):
+        raise ValueError(f"未知的仓库类型: {repo_type}")
     ms_file = get_modelscope_repo_file(
         repo_id=repo_id,
         repo_type=repo_type

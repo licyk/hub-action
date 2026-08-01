@@ -15,8 +15,7 @@ from typing import (
 )
 from pathlib import Path
 
-from modelscope.hub.api import HubApi
-from huggingface_hub import HfApi
+from sd_webui_all_in_one.repo_manager import RepoManager
 
 
 T = TypeVar("T")
@@ -137,28 +136,24 @@ def get_huggingface_repo_file(
     :param repo_type`(str)`: 仓库种类 (model/dataset/space)
     :return `list[tuple[str, str]]`: 仓库文件列表 `[<路径>, <链接>]`
     '''
-    api = HfApi()
-    file_list: list[tuple[str, str]] = []
-
-    print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表")
-    repo_files = api.list_repo_files(
+    repo_manager = RepoManager()
+    repo_files = repo_manager.get_repo_file(
+        api_type="huggingface",
         repo_id=repo_id,
         repo_type=repo_type,
     )
-
-    for i in repo_files:
-        if repo_type == "model":
-            url = f"https://huggingface.co/{repo_id}/resolve/main/{i}"
-        elif repo_type == "dataset":
-            url = f"https://huggingface.co/datasets/{repo_id}/resolve/main/{i}"
-        elif repo_type == "space":
-            url = f"https://huggingface.co/spaces/{repo_id}/resolve/main/{i}"
-        else:
-            raise ValueError(f"错误的 HuggingFace 仓库类型: {repo_type}")
-
-        file_list.append((i, url))
-
-    return file_list
+    return [
+        (
+            file_path,
+            repo_manager.get_repo_file_download_url(
+                api_type="huggingface",
+                repo_id=repo_id,
+                file_path=file_path,
+                repo_type=repo_type,
+            ),
+        )
+        for file_path in repo_files
+    ]
 
 
 @retryable(
@@ -178,66 +173,24 @@ def get_modelscope_repo_file(
     :param repo_type`(str)`: 仓库种类 (model/dataset/space)
     :return `tuple[str, str]`: 仓库文件列表 `[<路径>, <链接>]`
     '''
-    api = HubApi()
-    file_list_url: list[tuple[str, str]] = []
-
-    def _get_file_path(repo_files: list[dict[str, Any]]) -> list:
-        file_list = []
-        for file in repo_files:
-            if file["Type"] != "tree":
-                file_list.append(file["Path"])
-        return file_list
-
-    if repo_type == "model":
-        print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表")
-        repo_files = api.get_model_files(model_id=repo_id, recursive=True)
-        file_list = _get_file_path(repo_files)
-    elif repo_type == "dataset":
-        print(f"获取 {repo_id} (类型: {repo_type}) 中的文件列表")
-        all_files = []
-        page_number = 1
-        page_size = 100
-        owner, dataset_name = repo_id.split("/")
-        dataset_hub_id, _ = api.get_dataset_id_and_type(
-            dataset_name=dataset_name,
-            namespace=owner,
-        )
-        while True:
-            repo_files = api.get_dataset_files(
+    repo_manager = RepoManager()
+    repo_files = repo_manager.get_repo_file(
+        api_type="modelscope",
+        repo_id=repo_id,
+        repo_type=repo_type,
+    )
+    return [
+        (
+            file_path,
+            repo_manager.get_repo_file_download_url(
+                api_type="modelscope",
                 repo_id=repo_id,
-                recursive=True,
-                page_number=page_number,
-                page_size=page_size,
-                dataset_hub_id=dataset_hub_id,
-            )
-            if not repo_files:
-                break
-
-            all_files.extend(repo_files)
-            if len(repo_files) < page_size:
-                break
-
-            page_number += 1
-        file_list = _get_file_path(all_files)
-    elif repo_type == "space":
-        print(f"{repo_id} 仓库类型为创空间, 不支持获取文件列表")
-        return file_list_url
-    else:
-        raise ValueError(f"未知的 {repo_type} 仓库类型")
-
-    for i in file_list:
-        if repo_type == "model":
-            url = f"https://modelscope.cn/models/{repo_id}/resolve/master/{i}"
-        elif repo_type == "dataset":
-            url = f"https://modelscope.cn/datasets/{repo_id}/resolve/master/{i}"
-        elif repo_type == "space":
-            url = f"https://modelscope.cn/studio/{repo_id}/resolve/master/{i}"
-        else:
-            raise ValueError(f"错误的 ModelScope 仓库类型: {repo_type}")
-
-        file_list_url.append((i, url))
-
-    return file_list_url
+                file_path=file_path,
+                repo_type=repo_type,
+            ),
+        )
+        for file_path in repo_files
+    ]
 
 
 def write_content_to_file(content: list, path: Union[str, Path]) -> None:
