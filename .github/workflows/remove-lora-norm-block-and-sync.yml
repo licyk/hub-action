@@ -30,7 +30,7 @@ jobs:
         env:
           UV_SYSTEM_PYTHON: 1
         run: |
-          uv pip install huggingface_hub hf_xet safetensors torch tqdm numpy
+          uv pip install huggingface_hub hf_xet safetensors torch tqdm numpy "sd-webui-all-in-one[models]"
 
       - name: Remove LoRA norm block and sync (for InvokeAI)
         shell: bash
