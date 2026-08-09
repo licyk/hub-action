@@ -3,11 +3,12 @@ import shutil
 import requests
 from enum import Enum
 from tempfile import TemporaryDirectory
-from typing import Literal, TypeAlias, Union
+from typing import Literal, TypeAlias
 from pathlib import Path
 
 from sd_webui_all_in_one.retry_decorator import retryable
 from sd_webui_all_in_one.repo_manager import RepoManager
+from sd_webui_all_in_one.downloader import download_file
 
 
 RepoType: TypeAlias = Literal["model", "dataset", "space"]
@@ -105,81 +106,10 @@ def create_download_task(
     return tasks
 
 
-def load_file_from_url(
-    url: str,
-    *,
-    model_dir: str,
-    progress: bool = True,
-    file_name: str | None = None,
-    hash_prefix: str | None = None,
-    re_download: bool = False,
-) -> str:
-    """Download a file from `url` into `model_dir`, using the file present if possible.
-    Returns the path to the downloaded file.
-
-    file_name: if specified, it will be used as the filename, otherwise the filename will be extracted from the url.
-        file is downloaded to {file_name}.tmp then moved to the final location after download is complete.
-    hash_prefix: sha256 hex string, if provided, the hash of the downloaded file will be checked against this prefix.
-        if the hash does not match, the temporary file is deleted and a ValueError is raised.
-    re_download: forcibly re-download the file even if it already exists.
-    """
-    from urllib.parse import urlparse
-    from tqdm import tqdm
-
-    if not file_name:
-        parts = urlparse(url)
-        file_name = os.path.basename(parts.path)
-
-    cached_file = os.path.abspath(os.path.join(model_dir, file_name))
-
-    if re_download or not os.path.exists(cached_file):
-        os.makedirs(model_dir, exist_ok=True)
-        temp_file = os.path.join(model_dir, f"{file_name}.tmp")
-        print(f'Downloading: "{url}" to {cached_file}')
-        response = requests.get(url, stream=True, timeout=30)
-        response.raise_for_status()
-        total_size = int(response.headers.get("content-length", 0))
-        with tqdm(
-            total=total_size,
-            unit="B",
-            unit_scale=True,
-            desc=file_name,
-            disable=not progress,
-        ) as progress_bar:
-            with open(temp_file, "wb") as file:
-                for chunk in response.iter_content(chunk_size=1024):
-                    if chunk:
-                        file.write(chunk)
-                        progress_bar.update(len(chunk))
-
-        if hash_prefix and not compare_sha256(temp_file, hash_prefix):
-            print("Hash mismatch for %s. Deleting the temporary file.", temp_file)
-            os.remove(temp_file)
-            raise ValueError(
-                f"File hash does not match the expected hash prefix {hash_prefix}!"
-            )
-
-        os.rename(temp_file, cached_file)
-    return cached_file
-
-
-def compare_sha256(file_path: str, hash_prefix: str) -> bool:
-    """Check if the SHA256 hash of the file matches the given prefix."""
-    import hashlib
-
-    hash_sha256 = hashlib.sha256()
-    blksize = 1024 * 1024
-
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(blksize), b""):
-            hash_sha256.update(chunk)
-    return hash_sha256.hexdigest().startswith(hash_prefix.strip().lower())
-
-
 def sync_file_to_repo(
     download_tasks: list,
     prefix: str,
-    root_path: Union[str, Path],
+    root_path: Path,
     repo_manager: RepoManager,
     hf_repo_id: str,
     hf_repo_type: RepoType,
@@ -190,18 +120,15 @@ def sync_file_to_repo(
         print("无上传任务")
         return
 
-    download_path = os.path.join(root_path, prefix)
+    download_path = root_path / prefix
     task_sum = len(download_tasks)
     task_count = 0
 
     for file, url, in_hf, in_ms in download_tasks:
         task_count += 1
-        file_in_local_path: str | None = None
         try:
             print(f"[{task_count}/{task_sum}] 下载 {file} 中")
-            file_in_local_path = load_file_from_url(
-                url=url, model_dir=download_path, file_name=file
-            )
+            file_in_local_path = download_file(url=url, path=download_path, save_name=file)
             if not in_hf:
                 print(
                     f"[{task_count}/{task_sum}] 上传 {file} 到 HuggingFace:{hf_repo_id} (类型: {hf_repo_type}) 中"
@@ -232,8 +159,8 @@ def sync_file_to_repo(
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"上传 / 下载 {file} 时发生了错误: {e}")
         finally:
-            if file_in_local_path is not None and os.path.exists(file_in_local_path):
-                os.remove(file_in_local_path)
+            if file_in_local_path is not None and file_in_local_path.exists():
+                file_in_local_path.unlink()
 
     print(f"[{task_count}/{task_sum}] 同步文件完成")
 
@@ -282,7 +209,7 @@ def main() -> None:
     sync_file_to_repo(
         download_tasks=download_tasks,
         prefix="flash_attn",
-        root_path=os.environ.get("ROOT_PATH", os.getcwd()),
+        root_path=Path(os.getenv("ROOT_PATH", os.getcwd())),
         repo_manager=repo_manager,
         hf_repo_id="licyk/wheel",
         hf_repo_type="model",

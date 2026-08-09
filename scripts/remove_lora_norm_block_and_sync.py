@@ -52,7 +52,7 @@ def remove_lora_norm_block(
     model_weights = load_file(lora_path)
 
     print(f"{lora_path.name} 块的数量: {len(model_weights.items())}")
-    for block, _ in model_weights.items():
+    for block in model_weights:
         if "norm" in block:
             norm_block_list.append(block)
 
