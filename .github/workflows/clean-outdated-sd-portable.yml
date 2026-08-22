@@ -1,4 +1,4 @@
-name: Clean Outdated SD Portable
+name: Clean Outdated SD Portable and Hanafubuki Releases
 
 on:
   schedule:
@@ -7,6 +7,19 @@ on:
   # delete:
   # create:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Preview Hanafubuki cleanup and skip portable cleanup
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clean-outdated-sd-webui-all-in-one
+  cancel-in-progress: false
 
 jobs:
   Clean-Outdated-SD-Portable:
@@ -34,6 +47,7 @@ jobs:
           ls "${{ github.workspace }}"
 
       - name: Clean Outdated SD Portable
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run == false }}
         shell: bash
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -45,3 +59,17 @@ jobs:
           DAY_THRESHOLD: 30
         run: |
           python "${{ github.workspace }}/scripts/clean_outdated_sd_portable.py"
+
+      - name: Clean Outdated Hanafubuki Releases
+        shell: bash
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          MODELSCOPE_API_TOKEN: ${{ secrets.MODELSCOPE_API_TOKEN }}
+          HF_REPO_ID: licyk/sd-webui-all-in-one
+          HF_REPO_TYPE: model
+          MS_REPO_ID: licyks/sd-webui-all-in-one
+          MS_REPO_TYPE: model
+          KEEP_VERSION_COUNT: 30
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        run: |
+          python "${{ github.workspace }}/scripts/clean_outdated_hanafubuki_releases.py"
