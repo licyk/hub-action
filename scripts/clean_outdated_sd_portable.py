@@ -30,13 +30,16 @@ from typing import (
     cast,
 )
 from pathlib import Path
-from collections import namedtuple
 
 from sd_webui_all_in_one.retry_decorator import retryable
 from sd_webui_all_in_one.repo_manager import RepoManager
 from sd_webui_all_in_one.file_manager import remove_files, copy_files, move_files
 from sd_webui_all_in_one.cmd import preprocess_command
 from sd_webui_all_in_one.logger import get_logger
+from sd_webui_all_in_one.portable_manager import (
+    DEFAULT_PORTABLE_PATH_IN_REPO,
+    parse_portable_filename,
+)
 
 from huggingface_hub import HfApi, CommitOperationDelete
 from modelscope import HubApi
@@ -148,83 +151,6 @@ def run_cmd(
         raise RuntimeError("\n".join(errors))
 
     return redact_sensitive_text(result.stdout, sensitive_values)
-
-
-
-# 解析整合包文件名的正则表达式
-PORTABLE_NAME_PATTERN = r'''
-    ^
-    (?P<software>[\w_]+?)       # 软件名 (允许下划线)
-    -                           
-    (?P<signature>[a-z0-9]+)    # 署名 (小写字母 + 数字)
-    -                           
-    (?:
-        # 每日构建模式：日期 + nightly
-        (?P<build_date>\d{8})   # 构建日期 (YYYYMMDD)
-        -
-        nightly                 
-    |
-        # 正式版本模式：v + 版本号
-        v
-        (?P<version>[\d.]+)     # 版本号 (数字和点)
-    )
-    \.
-    (?P<extension>[a-z0-9]+(?:\.[a-z0-9]+)?)  # 扩展名 (支持多级扩展)
-    $
-'''
-
-# 编译正则表达式 (忽略大小写, 详细模式)
-portable_name_parse_regex = re.compile(
-    PORTABLE_NAME_PATTERN,
-    re.VERBOSE | re.IGNORECASE
-)
-
-# 定义文件名组件的命名元组
-PortableNameComponent = namedtuple(
-    'PortableNameComponent', [
-        'software',     # 软件名称
-        'signature',    # 署名标记
-        'build_type',   # 构建类型 (nightly/stable)
-        'build_date',   # 构建日期 (仅 nightly 有效)
-        'version',      # 版本号 (仅 stable 有效)
-        'extension'     # 文件扩展名
-    ]
-)
-
-
-def parse_portable_filename(filename: str) -> PortableNameComponent:
-    """
-    解析文件名并返回结构化数据
-
-    :param filename: 要解析的文件名
-    :return: PortableNameComponent 命名元组
-    :raises ValueError: 当文件名不符合模式时
-    """
-    match = portable_name_parse_regex.match(filename)
-    if not match:
-        raise ValueError(f"无效文件名格式: {filename}")
-
-    groups = match.groupdict()
-
-    # 确定构建类型并提取相应字段
-    if groups['build_date']:
-        build_type = 'nightly'
-        build_date = groups['build_date']
-        version = None
-    else:
-        build_type = 'stable'
-        build_date = None
-        version = groups['version']
-
-    return PortableNameComponent(
-        software=groups['software'],
-        signature=groups['signature'],
-        build_type=build_type,
-        build_date=build_date,
-        version=version,
-        extension=groups['extension'].lower()
-    )
-
 
 # 仓库类型
 RepoType: TypeAlias = Literal["model", "dataset", "space"]
@@ -484,13 +410,14 @@ def fitter_portable_list(repo_files: list[str]) -> tuple[list[str], list[str]]:
     """
     stable = []
     nightly = []
+    portable_path_prefix = f"{DEFAULT_PORTABLE_PATH_IN_REPO}/"
     for file in repo_files:
-        if file.startswith("portable/"):
+        if file.startswith(portable_path_prefix):
             try:
                 portable = parse_portable_filename(os.path.basename(file))
-                if portable.build_type == "stable":
+                if portable["channel"] == "stable":
                     stable.append(file)
-                if portable.build_type == "nightly":
+                if portable["channel"] == "nightly":
                     nightly.append(file)
             except ValueError as e:
                 print(f"{file} 不符合整合包文件名规范: {e}")
@@ -505,7 +432,10 @@ def is_outdated_portable(name: str, day_threshold: int) -> bool:
     :return `bool`: 当整合包发布时间超过限制时为过期整合包
     """
     portable = parse_portable_filename(name)
-    date = datetime.datetime.strptime(portable.build_date, r"%Y%m%d")
+    build_date = portable["build_date"]
+    if build_date is None:
+        raise ValueError(f"整合包不是 Nightly 构建: {name}")
+    date = datetime.datetime.strptime(build_date, r"%Y%m%d")
     date_threshold = datetime.datetime.today() - datetime.timedelta(days=day_threshold)
     return date < date_threshold
 
