@@ -5,9 +5,7 @@ Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/
 ## 当前状态
 |Github Action|Status|
 |---|---|
-|Github -> Gitee|[![Sync To Gitee](https://github.com/licyk/hub-action/actions/workflows/sync-to-gitee.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-to-gitee.yml)|
-|Github -> Gitlab|[![Sync To Gitlab](https://github.com/licyk/hub-action/actions/workflows/sync-to-gitlab.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-to-gitlab.yml)|
-|Github -> Bitbucket|[![Sync To Bitbucket](https://github.com/licyk/hub-action/actions/workflows/sync-to-bitbucket.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-to-bitbucket.yml)|
+|Github -> Gitee / Gitlab / Bitbucket|[![Sync To Mirror](https://github.com/licyk/hub-action/actions/workflows/sync-to-mirror.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-to-mirror.yml)|
 |Github Mirror Test|[![Test Avaliable Github Mirror](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-github-mirror.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-github-mirror.yml)|
 |HuggingFace Mirror Test|[![Test Avaliable HuggingFace Mirror](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-huggingface-mirror.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-huggingface-mirror.yml)|
 |List HuggingFace Repo|[![List HuggingFace Repo](https://github.com/licyk/hub-action/actions/workflows/list-hugginface-repo.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/list-hugginface-repo.yml)|
@@ -33,7 +31,9 @@ VCRedist x64 DLL 查询默认下载链接来源：[Microsoft Visual C++ Redistri
 
 
 ## 同步仓库教程
-使用 [git-mirror-action](https://github.com/wearerequired/git-mirror-action) 进行同步
+使用 [scripts/git_mirror.py](scripts/git_mirror.py) 进行同步，仓库列表统一写在 [scripts/mirror_repos.json](scripts/mirror_repos.json) 里，由 [Sync To Mirror](.github/workflows/sync-to-mirror.yml) 工作流调用。
+
+该脚本只依赖 Python 标准库，支持多线程并发同步，用法见[同步脚本用法](#同步脚本用法)。
 
 ### 1、生成 SSH 公钥
 
@@ -75,74 +75,105 @@ VCRedist x64 DLL 查询默认下载链接来源：[Microsoft Visual C++ Redistri
 ![6.png](assets/6.png)
 ![7.png](assets/7.png)
 
-- 同步单个项目
+需要同步的仓库写在 `scripts/mirror_repos.json` 里，一条仓库配置支持三种写法：
 
-```yml
-name: Sync To Gitee
-
-on: # 这里是 Github Action 的触发条件
-    schedule:
-    - cron: '0 8 * * *' # 每日 24 点进行同步
-    push:
-    delete:
-    create:
-
-jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-
-            - name: Sync yourreponame to Gitee
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  # 注意在 Settings -> Secrets 配置 GITEE_RSA_PRIVATE_KEY
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  # 注意替换为你的 GitHub 源仓库地址
-                  source-repo: git@github.com:username/yourreponame.git
-                  # 注意替换为你的 Gitee 目标仓库地址
-                  destination-repo: git@gitee.com:username/yourreponame.git
+```jsonc
+{
+  "source": {
+    // {name} 会被替换成源仓库名
+    "url": "git@github.com:licyk/{name}.git",
+    // 克隆源仓库用的私钥所在的环境变量，没有设置时回落到第一个可用平台的私钥
+    "key_env": "SOURCE_SSH_PRIVATE_KEY"
+  },
+  "destinations": {
+    "gitee": {
+      "url": "git@gitee.com:licyk/{name}.git",
+      "key_env": "GITEE_RSA_PRIVATE_KEY",
+      // 为 false 时默认不同步，需要用 --destination gitee 显式指定
+      "enabled": true
+    }
+  },
+  "repos": [
+    // 1. 两边同名
+    "hub-action",
+    // 2. 源仓库 foo 同步到目的仓库 bar
+    "foo:bar",
+    // 3. 只在某个平台上改名，或者只同步到部分平台
+    { "src": "t", "rename": { "gitee": "tt" }, "destinations": ["gitee", "gitlab"] }
+  ]
+}
 ```
 
-- 同步多个项目
+workflow 里调用脚本，各平台的私钥通过环境变量传进去：
 
 ```yml
-name: Sync To Gitee
+name: Sync To Mirror
 
-on: # 这里是 Github Action 的触发条件
-    schedule:
-    - cron: '0 8 * * *' # 每日 24 点进行同步
-    push:
-    delete:
-    create:
+on:
+  schedule:
+    - cron: '0 16 * * *' # 北京时间每日 00:00 执行
+  workflow_dispatch:
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
+  git-mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Sync yourreponame_1 to Gitee
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  # 注意在 Settings -> Secrets 配置 GITEE_RSA_PRIVATE_KEY
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  # 注意替换为你的 GitHub 源仓库地址
-                  source-repo: git@github.com:username/yourreponame_1.git
-                  # 注意替换为你的 Gitee 目标仓库地址
-                  destination-repo: git@gitee.com:username/yourreponame_1.git
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
 
-            - name: Sync yourreponame_2 to Gitee
-              uses: wearerequired/git-mirror-action@master
-              env:
-                  # 注意在 Settings -> Secrets 配置 GITEE_RSA_PRIVATE_KEY
-                  SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-              with:
-                  # 注意替换为你的 GitHub 源仓库地址
-                  source-repo: git@github.com:username/yourreponame_2.git
-                  # 注意替换为你的 Gitee 目标仓库地址
-                  destination-repo: git@gitee.com:username/yourreponame_2.git
+      - name: Sync repos
+        shell: bash
+        env:
+          # 注意在 Settings -> Secrets 配置这些私钥
+          GITEE_RSA_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+          GITLAB_RSA_PRIVATE_KEY: ${{ secrets.GITLAB_RSA_PRIVATE_KEY || secrets.GITEE_RSA_PRIVATE_KEY }}
+        run: python scripts/git_mirror.py --jobs 6
 ```
+
+
+### 同步脚本用法
+
+```shell
+# 同步配置里已启用的所有平台（fanout 模式：每个仓库只克隆一次，并发推送到所有平台）
+python scripts/git_mirror.py
+
+# 一对一模式：每个（仓库，平台）组合各自克隆并推送，与旧的 matrix 行为一致
+python scripts/git_mirror.py --mode pairwise
+
+# 只同步指定平台和指定仓库
+python scripts/git_mirror.py --destination gitee --repo hub-action,term-sd
+
+# 演练，不实际推送
+python scripts/git_mirror.py --dry-run
+
+# 只看这次会同步哪些仓库
+python scripts/git_mirror.py --list
+```
+
+|参数|说明|默认值|
+|---|---|---|
+|`--config`|仓库配置文件|`scripts/mirror_repos.json`|
+|`--mode`|`fanout` / `one-to-many` 克隆一次推送到所有平台；`pairwise` / `one-to-one` 每个平台各自克隆|`fanout`|
+|`--destination`|只同步指定平台，可重复或用逗号分隔，`all` 表示包括未启用的平台|配置里 `enabled` 的平台|
+|`--repo`|只同步指定仓库（按源仓库名），可重复或用逗号分隔|全部|
+|`--jobs`|同时克隆的仓库数，也决定磁盘占用|`6`|
+|`--push-jobs`|fanout 模式下单个仓库同时推送的平台数|平台数量|
+|`--dry-run`|推送时加上 `--dry-run`，不实际写入目的平台|关闭|
+|`--timeout`|单条 git 命令的超时秒数|`1800`|
+|`--retries`|克隆和推送的尝试次数|`3`|
+|`--retry-delay`|重试间隔秒数|`5`|
+|`--no-color`|关闭彩色输出|自动判断|
+|`--list`|只打印本次会同步哪些仓库，不实际执行|关闭|
+
+脚本会把 `refs/heads` 和 `refs/tags` 之外的引用（比如 GitHub 额外公开的 `refs/pull/*`）在推送前删掉，
+否则 Gitee / GitLab / Bitbucket 会拒绝这些引用，导致整次推送失败。
+
+另外可以设置 `SSH_KNOWN_HOSTS` 环境变量来启用主机密钥校验，不设置时会跳过校验并给出警告。
 
 如果同步到 Gitee 的 Github Action 出现`remote: error: GE007: Your push would publish a private email address.`这个报错，则在 Gitee `设置`->`邮箱管理` , √ 去掉
 

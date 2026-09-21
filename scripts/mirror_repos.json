@@ -1,0 +1,64 @@
+{
+  "$comment": "仓库镜像同步配置, 由 scripts/git_mirror.py 读取",
+  "source": {
+    "url": "git@github.com:licyk/{name}.git",
+    "key_env": "SOURCE_SSH_PRIVATE_KEY"
+  },
+  "destinations": {
+    "gitee": {
+      "url": "git@gitee.com:licyk/{name}.git",
+      "key_env": "GITEE_RSA_PRIVATE_KEY",
+      "enabled": true
+    },
+    "gitlab": {
+      "url": "git@gitlab.com:licyk/{name}.git",
+      "key_env": "GITLAB_RSA_PRIVATE_KEY",
+      "enabled": true
+    },
+    "bitbucket": {
+      "url": "git@bitbucket.org:licyk/{name}.git",
+      "key_env": "BITBUCKET_RSA_PRIVATE_KEY",
+      "enabled": false
+    }
+  },
+  "repos": [
+    "term-sd",
+    { "src": "t", "rename": { "gitee": "tt" } },
+    "hub-action",
+    "cursors-archive",
+    "psh2bat",
+    "ani2xcur-tui",
+    "repo_mirror_tools",
+    "ani2xcur",
+    "sd-webui-all-in-one",
+    "SDNote",
+    "stablediffusion",
+    "README-collection",
+    "a1111-sd-webui-haku-img",
+    "ssfconv",
+    "sd-webui-wd14-tagger",
+    "invoke_wd14_tagger",
+    "ComfyUI-HakuImg",
+    "sd-webui-licyk-style-image",
+    "sd_forge_hypertile_svd_z123",
+    "ComfyUI-TCD-Sampler",
+    "action-gitee-release",
+    "invoke_tipo",
+    "licyk",
+    "ComfyUI-Restart-Sampler",
+    "PBRemTools",
+    "advanced_euler_sampler_extension",
+    "sd-webui-tcd-sampler",
+    "scrcpy-tui",
+    "cinnamon-theme-transparent",
+    "bili-dl-merge",
+    "qwen-tts-webui",
+    "resources",
+    "wheels",
+    "sd-webui-all-in-one-launcher",
+    "python-docstring-checker",
+    "cursor-sheet",
+    "aria2-bin",
+    "aria2-next-bin"
+  ]
+}

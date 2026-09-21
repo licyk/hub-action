@@ -1,0 +1,92 @@
+name: Sync To Mirror
+
+on:
+  schedule:
+    # * 在 YAML 里是特殊字符, 所以整个表达式要加引号
+    # UTC 16:00 -> CST (China) 00:00, 见 https://datetime360.com/cn/utc-cst-china-time/
+    - cron: '0 16 * * *' # 北京时间每日 00:00 执行
+  workflow_dispatch:
+    inputs:
+      destination:
+        description: 同步到哪个平台
+        required: false
+        type: choice
+        default: default
+        options:
+          - default # scripts/mirror_repos.json 里 enabled 为 true 的平台
+          - all # 配置里的全部平台, 包括未启用的
+          - gitee
+          - gitlab
+          - bitbucket
+      mode:
+        description: 同步模式 (fanout 克隆一次推送到所有平台, pairwise 每个平台各自克隆)
+        required: false
+        type: choice
+        default: fanout
+        options:
+          - fanout
+          - pairwise
+      repo:
+        description: 只同步指定仓库 (源仓库名, 多个用逗号分隔, 留空为全部)
+        required: false
+        type: string
+        default: ''
+      jobs:
+        description: 同时克隆的仓库数
+        required: false
+        type: string
+        default: '6'
+      dry_run:
+        description: 只演练不实际推送
+        required: false
+        type: boolean
+        default: false
+
+# 同一时间只跑一次同步, 免得定时任务和手动触发撞在一起往同一批仓库推送
+concurrency:
+  group: sync-to-mirror
+  cancel-in-progress: false
+
+jobs:
+  git-mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Sync repos
+        shell: bash
+        env:
+          # 没有单独配置某个平台的密钥时回落到 GITEE_RSA_PRIVATE_KEY,
+          # 与之前三个工作流共用一把密钥的做法保持一致
+          GITEE_RSA_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+          GITLAB_RSA_PRIVATE_KEY: ${{ secrets.GITLAB_RSA_PRIVATE_KEY || secrets.GITEE_RSA_PRIVATE_KEY }}
+          BITBUCKET_RSA_PRIVATE_KEY: ${{ secrets.BITBUCKET_RSA_PRIVATE_KEY || secrets.GITEE_RSA_PRIVATE_KEY }}
+          SOURCE_SSH_PRIVATE_KEY: ${{ secrets.SOURCE_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          # 通过环境变量传入而不是直接插值到脚本里, 避免输入内容被当成 shell 代码执行
+          INPUT_DESTINATION: ${{ inputs.destination }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_REPO: ${{ inputs.repo }}
+          INPUT_JOBS: ${{ inputs.jobs }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=(
+            --mode "${INPUT_MODE:-fanout}"
+            --jobs "${INPUT_JOBS:-6}"
+          )
+          if [[ -n "${INPUT_DESTINATION}" && "${INPUT_DESTINATION}" != "default" ]]; then
+              args+=(--destination "${INPUT_DESTINATION}")
+          fi
+          if [[ -n "${INPUT_REPO}" ]]; then
+              args+=(--repo "${INPUT_REPO}")
+          fi
+          if [[ "${INPUT_DRY_RUN}" == "true" ]]; then
+              args+=(--dry-run)
+          fi
+          python scripts/git_mirror.py "${args[@]}"
