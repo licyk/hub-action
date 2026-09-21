@@ -5,7 +5,7 @@ Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/
 ## 当前状态
 |Github Action|Status|
 |---|---|
-|Github -> Gitee / Gitlab / Bitbucket|[![Sync To Mirror](https://github.com/licyk/hub-action/actions/workflows/sync-to-mirror.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-to-mirror.yml)|
+|Github -> Gitee / Gitlab|[![Sync To Mirror](https://github.com/licyk/hub-action/actions/workflows/sync-to-mirror.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-to-mirror.yml)|
 |Github Mirror Test|[![Test Avaliable Github Mirror](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-github-mirror.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-github-mirror.yml)|
 |HuggingFace Mirror Test|[![Test Avaliable HuggingFace Mirror](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-huggingface-mirror.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/test-avaliable-huggingface-mirror.yml)|
 |List HuggingFace Repo|[![List HuggingFace Repo](https://github.com/licyk/hub-action/actions/workflows/list-hugginface-repo.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/list-hugginface-repo.yml)|
@@ -100,18 +100,21 @@ VCRedist x64 DLL 查询默认下载链接来源：[Microsoft Visual C++ Redistri
     "foo:bar",
     // 3. 只在某个平台上改名，或者只同步到部分平台
     { "src": "t", "rename": { "gitee": "tt" }, "destinations": ["gitee", "gitlab"] },
-    // 4. 平时不同步，但配置留着
+    // 4. 除了某个平台，其他都同步
+    { "src": "SDNote", "exclude_destinations": ["gitee"] },
+    // 5. 平时不同步，但配置留着
     { "src": "some-repo", "enabled": false }
   ]
 }
 ```
 
-挑选要同步的仓库有三种办法，按需要挑一种：
+挑选要同步的仓库有四种办法，按需要挑一种：
 
 |办法|适用场景|
 |---|---|
 |配置里 `"enabled": false`|这个仓库长期不需要同步。比直接把整行删掉好，能看出是特意不同步而不是漏加了|
-|配置里 `"destinations": [...]`|这个仓库只需要同步到部分平台|
+|配置里 `"destinations": [...]`|白名单，这个仓库只同步到列出的平台|
+|配置里 `"exclude_destinations": [...]`|黑名单，这个仓库不同步到列出的平台|
 |命令行 `--repo` / `--exclude`|临时只跑其中几个仓库，两者都支持通配符|
 
 `--repo` 写通配符时只会命中已启用的仓库；把仓库名原样写出来时，
@@ -119,6 +122,9 @@ VCRedist x64 DLL 查询默认下载链接来源：[Microsoft Visual C++ Redistri
 想一次性带上所有被禁用的仓库则用 `--include-disabled`。
 
 模式没有匹配到任何仓库时脚本会直接报错退出，免得名字拼错以后悄悄少同步一个。
+
+想表达"除了某个平台哪里都同步"时用黑名单而不是白名单：以后配置里新增一个平台，
+白名单写法会把新平台漏掉，黑名单写法不会。两者同时列出同一个平台会直接报配置错误。
 
 workflow 里调用脚本，各平台的私钥通过环境变量传进去：
 

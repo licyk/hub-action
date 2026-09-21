@@ -6,7 +6,7 @@
     "  \"foo:bar\"  源仓库 foo 同步到目的仓库 bar",
     "  {\"src\": \"foo\", \"dst\": \"bar\", \"rename\": {\"gitee\": \"baz\"}, \"destinations\": [\"gitee\"], \"enabled\": false}",
     "enabled 为 false 的仓库平时不同步, 但配置里保留着, 需要时用 --repo 指名或 --include-disabled 捞回来",
-    "destinations 用来限定这个仓库只同步到哪些平台, 不写就是所有平台"
+    "destinations 是白名单 (只同步到这些平台), exclude_destinations 是黑名单 (这些平台不同步), 不写就是所有平台"
   ],
   "source": {
     "url": "git@github.com:licyk/{name}.git",
@@ -22,11 +22,6 @@
       "url": "git@gitlab.com:licyk/{name}.git",
       "key_env": "GITLAB_RSA_PRIVATE_KEY",
       "enabled": true
-    },
-    "bitbucket": {
-      "url": "git@bitbucket.org:licyk/{name}.git",
-      "key_env": "BITBUCKET_RSA_PRIVATE_KEY",
-      "enabled": false
     }
   },
   "repos": [
@@ -44,7 +39,12 @@
     "repo_mirror_tools",
     "ani2xcur",
     "sd-webui-all-in-one",
-    "SDNote",
+    {
+      "src": "SDNote",
+      "exclude_destinations": [
+        "gitee"
+      ]
+    },
     "stablediffusion",
     "README-collection",
     "a1111-sd-webui-haku-img",
@@ -72,6 +72,29 @@
     "python-docstring-checker",
     "cursor-sheet",
     "aria2-bin",
-    "aria2-next-bin"
+    "aria2-next-bin",
+    "Hanafubuki",
+    "comfyui-model-hub",
+    "empty",
+    "sd-forge-neo-kohya-hrfix",
+    "sd-model-hub",
+    "sd-webui-model-hub",
+    "ComfyUI-Manager",
+    "Euler-Smea-Dyn-Sampler",
+    "Fooocus",
+    "PixelOE",
+    "Pyramid_Noise_For_Inference",
+    "SemEnr",
+    "WeiLin-ComfyUI-prompt-all-in-one",
+    "comfyui_controlnet_aux",
+    "hexo-theme-fluid",
+    "hysteria",
+    "lora-scripts",
+    "sd-webui-controlnet",
+    "sd-webui-prompt-all-in-one",
+    "sd-webui-regional-prompter",
+    "stable-diffusion-webui",
+    "stable-diffusion-webui-forge",
+    "stable-diffusion-webui-model-toolkit"
   ]
 }

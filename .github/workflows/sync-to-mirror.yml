@@ -17,7 +17,6 @@ on:
           - all # 配置里的全部平台, 包括未启用的
           - gitee
           - gitlab
-          - bitbucket
       mode:
         description: 同步模式 (fanout 克隆一次推送到所有平台, pairwise 每个平台各自克隆)
         required: false
@@ -76,7 +75,6 @@ jobs:
           # 与之前三个工作流共用一把密钥的做法保持一致
           GITEE_RSA_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
           GITLAB_RSA_PRIVATE_KEY: ${{ secrets.GITLAB_RSA_PRIVATE_KEY || secrets.GITEE_RSA_PRIVATE_KEY }}
-          BITBUCKET_RSA_PRIVATE_KEY: ${{ secrets.BITBUCKET_RSA_PRIVATE_KEY || secrets.GITEE_RSA_PRIVATE_KEY }}
           SOURCE_SSH_PRIVATE_KEY: ${{ secrets.SOURCE_SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
           # 通过环境变量传入而不是直接插值到脚本里, 避免输入内容被当成 shell 代码执行

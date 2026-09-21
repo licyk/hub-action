@@ -146,12 +146,15 @@ class Repo:
     dst: str
     rename: dict[str, str] = field(default_factory=dict)
     only: tuple[str, ...] | None = None
+    without: tuple[str, ...] = ()
     enabled: bool = True
 
     def name_on(self, destination: str) -> str:
         return self.rename.get(destination, self.dst)
 
     def goes_to(self, destination: str) -> bool:
+        if destination in self.without:
+            return False
         return self.only is None or destination in self.only
 
 
@@ -172,7 +175,11 @@ def _parse_repo(entry: object, destinations: Iterable[str]) -> Repo:
     支持三种写法:
         "foo"                  两边同名
         "foo:bar"              源仓库 foo, 目的仓库 bar
-        {"src": ..., "dst": ..., "rename": {...}, "destinations": [...], "enabled": ...}
+        {"src": ..., "dst": ..., "rename": {...}, "destinations": [...],
+         "exclude_destinations": [...], "enabled": ...}
+
+    destinations 是白名单 (只同步到这些平台), exclude_destinations 是黑名单 (这些平台不同步)。
+    想表达"除了某个平台哪里都同步"时用黑名单: 以后新增平台, 白名单会把新平台漏掉, 黑名单不会。
 
     enabled 为 false 的仓库平时不同步, 但配置还留着 —— 比原来直接把整行删掉好, 既能看出
     这个仓库是"特意不同步"而不是"忘了加", 需要时用 --repo 指名或者 --include-disabled 就能捞回来。
@@ -197,7 +204,21 @@ def _parse_repo(entry: object, destinations: Iterable[str]) -> Repo:
             if name not in known:
                 raise ValueError(f"仓库 {src} 的 destinations 指向了未定义的平台 {name}")
         only = tuple(only)
-    return Repo(src=src, dst=entry.get("dst") or src, rename=dict(rename), only=only, enabled=bool(entry.get("enabled", True)))
+    without = tuple(entry.get("exclude_destinations") or ())
+    for name in without:
+        if name not in known:
+            raise ValueError(f"仓库 {src} 的 exclude_destinations 指向了未定义的平台 {name}")
+    if only is not None and set(only) & set(without):
+        overlap = ", ".join(sorted(set(only) & set(without)))
+        raise ValueError(f"仓库 {src} 的 destinations 和 exclude_destinations 同时包含了 {overlap}")
+    return Repo(
+        src=src,
+        dst=entry.get("dst") or src,
+        rename=dict(rename),
+        only=only,
+        without=without,
+        enabled=bool(entry.get("enabled", True)),
+    )
 
 
 def load_config(path: Path) -> Config:
@@ -229,7 +250,11 @@ def load_config(path: Path) -> Config:
     if not destinations:
         raise MirrorError("配置文件里没有定义任何目的平台")
 
-    repos = [_parse_repo(entry, destinations) for entry in (raw.get("repos") or [])]
+    try:
+        repos = [_parse_repo(entry, destinations) for entry in (raw.get("repos") or [])]
+    except ValueError as exc:
+        # 配置写错是用户的问题, 报一行清楚的错误就够了, 不用甩一整段回溯出来
+        raise MirrorError(str(exc)) from None
     if not repos:
         raise MirrorError("配置文件里没有定义任何仓库")
 
