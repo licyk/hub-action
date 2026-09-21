@@ -45,10 +45,8 @@
         "gitee"
       ]
     },
-    "stablediffusion",
     "README-collection",
     "a1111-sd-webui-haku-img",
-    "ssfconv",
     "sd-webui-wd14-tagger",
     "invoke_wd14_tagger",
     "ComfyUI-HakuImg",
@@ -75,26 +73,14 @@
     "aria2-next-bin",
     "Hanafubuki",
     "comfyui-model-hub",
-    "empty",
     "sd-forge-neo-kohya-hrfix",
     "sd-model-hub",
     "sd-webui-model-hub",
     "ComfyUI-Manager",
-    "Euler-Smea-Dyn-Sampler",
     "Fooocus",
-    "PixelOE",
-    "Pyramid_Noise_For_Inference",
-    "SemEnr",
     "WeiLin-ComfyUI-prompt-all-in-one",
     "comfyui_controlnet_aux",
-    "hexo-theme-fluid",
-    "hysteria",
-    "lora-scripts",
-    "sd-webui-controlnet",
     "sd-webui-prompt-all-in-one",
-    "sd-webui-regional-prompter",
-    "stable-diffusion-webui",
-    "stable-diffusion-webui-forge",
-    "stable-diffusion-webui-model-toolkit"
+    "sd-webui-regional-prompter"
   ]
 }
