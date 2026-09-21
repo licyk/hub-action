@@ -99,10 +99,26 @@ VCRedist x64 DLL 查询默认下载链接来源：[Microsoft Visual C++ Redistri
     // 2. 源仓库 foo 同步到目的仓库 bar
     "foo:bar",
     // 3. 只在某个平台上改名，或者只同步到部分平台
-    { "src": "t", "rename": { "gitee": "tt" }, "destinations": ["gitee", "gitlab"] }
+    { "src": "t", "rename": { "gitee": "tt" }, "destinations": ["gitee", "gitlab"] },
+    // 4. 平时不同步，但配置留着
+    { "src": "some-repo", "enabled": false }
   ]
 }
 ```
+
+挑选要同步的仓库有三种办法，按需要挑一种：
+
+|办法|适用场景|
+|---|---|
+|配置里 `"enabled": false`|这个仓库长期不需要同步。比直接把整行删掉好，能看出是特意不同步而不是漏加了|
+|配置里 `"destinations": [...]`|这个仓库只需要同步到部分平台|
+|命令行 `--repo` / `--exclude`|临时只跑其中几个仓库，两者都支持通配符|
+
+`--repo` 写通配符时只会命中已启用的仓库；把仓库名原样写出来时，
+即使它在配置里是 `"enabled": false` 也照样同步，因为指名道姓就是明确想要它。
+想一次性带上所有被禁用的仓库则用 `--include-disabled`。
+
+模式没有匹配到任何仓库时脚本会直接报错退出，免得名字拼错以后悄悄少同步一个。
 
 workflow 里调用脚本，各平台的私钥通过环境变量传进去：
 
@@ -148,6 +164,13 @@ python scripts/git_mirror.py --mode pairwise
 # 只同步指定平台和指定仓库
 python scripts/git_mirror.py --destination gitee --repo hub-action,term-sd
 
+# 用通配符挑一批仓库，或者反过来排除一批
+python scripts/git_mirror.py --repo 'ComfyUI-*'
+python scripts/git_mirror.py --exclude 'sd-webui-*,aria2-*'
+
+# 连同配置里 enabled 为 false 的仓库一起同步
+python scripts/git_mirror.py --include-disabled
+
 # 演练，不实际推送
 python scripts/git_mirror.py --dry-run
 
@@ -160,7 +183,9 @@ python scripts/git_mirror.py --list
 |`--config`|仓库配置文件|`scripts/mirror_repos.json`|
 |`--mode`|`fanout` / `one-to-many` 克隆一次推送到所有平台；`pairwise` / `one-to-one` 每个平台各自克隆|`fanout`|
 |`--destination`|只同步指定平台，可重复或用逗号分隔，`all` 表示包括未启用的平台|配置里 `enabled` 的平台|
-|`--repo`|只同步指定仓库（按源仓库名），可重复或用逗号分隔|全部|
+|`--repo`|只同步指定仓库（按源仓库名，支持通配符），可重复或用逗号分隔|全部|
+|`--exclude`|排除指定仓库（按源仓库名，支持通配符），可重复或用逗号分隔|无|
+|`--include-disabled`|连同配置里 `enabled` 为 false 的仓库一起同步|关闭|
 |`--jobs`|同时克隆的仓库数，也决定磁盘占用|`6`|
 |`--push-jobs`|fanout 模式下单个仓库同时推送的平台数|平台数量|
 |`--dry-run`|推送时加上 `--dry-run`，不实际写入目的平台|关闭|

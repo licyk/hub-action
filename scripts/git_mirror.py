@@ -25,6 +25,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import re
@@ -145,6 +146,7 @@ class Repo:
     dst: str
     rename: dict[str, str] = field(default_factory=dict)
     only: tuple[str, ...] | None = None
+    enabled: bool = True
 
     def name_on(self, destination: str) -> str:
         return self.rename.get(destination, self.dst)
@@ -170,7 +172,10 @@ def _parse_repo(entry: object, destinations: Iterable[str]) -> Repo:
     支持三种写法:
         "foo"                  两边同名
         "foo:bar"              源仓库 foo, 目的仓库 bar
-        {"src": ..., "dst": ..., "rename": {...}, "destinations": [...]}
+        {"src": ..., "dst": ..., "rename": {...}, "destinations": [...], "enabled": ...}
+
+    enabled 为 false 的仓库平时不同步, 但配置还留着 —— 比原来直接把整行删掉好, 既能看出
+    这个仓库是"特意不同步"而不是"忘了加", 需要时用 --repo 指名或者 --include-disabled 就能捞回来。
     """
     if isinstance(entry, str):
         src, _, dst = entry.partition(":")
@@ -192,7 +197,7 @@ def _parse_repo(entry: object, destinations: Iterable[str]) -> Repo:
             if name not in known:
                 raise ValueError(f"仓库 {src} 的 destinations 指向了未定义的平台 {name}")
         only = tuple(only)
-    return Repo(src=src, dst=entry.get("dst") or src, rename=dict(rename), only=only)
+    return Repo(src=src, dst=entry.get("dst") or src, rename=dict(rename), only=only, enabled=bool(entry.get("enabled", True)))
 
 
 def load_config(path: Path) -> Config:
@@ -596,7 +601,9 @@ def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         help="fanout / one-to-many: 克隆一次推送到所有平台 (默认); pairwise / one-to-one: 每个平台各自克隆推送",
     )
     parser.add_argument("--destination", action="append", help="只同步指定平台, 可重复或用逗号分隔 (默认: 配置里 enabled 的平台)")
-    parser.add_argument("--repo", action="append", help="只同步指定仓库 (按源仓库名), 可重复或用逗号分隔")
+    parser.add_argument("--repo", action="append", help="只同步指定仓库 (按源仓库名, 支持通配符), 可重复或用逗号分隔")
+    parser.add_argument("--exclude", action="append", help="排除指定仓库 (按源仓库名, 支持通配符), 可重复或用逗号分隔")
+    parser.add_argument("--include-disabled", action="store_true", help="连同配置里 enabled 为 false 的仓库一起同步")
     parser.add_argument("--jobs", type=int, default=6, help="同时克隆的仓库数, 也决定磁盘占用 (默认: 6)")
     parser.add_argument("--push-jobs", type=int, default=0, help="fanout 模式下单个仓库同时推送的平台数 (默认: 平台数量)")
     parser.add_argument("--dry-run", action="store_true", help="推送时加上 --dry-run, 不实际写入目的平台")
@@ -623,17 +630,63 @@ def select_destinations(config: Config, wanted: Sequence[str]) -> list[Destinati
     return chosen
 
 
-def select_repos(config: Config, wanted: Sequence[str]) -> list[Repo]:
-    """确定本次要同步的仓库"""
-    if not wanted:
-        return list(config.repos)
+def select_repos(
+    config: Config,
+    wanted: Sequence[str],
+    excluded: Sequence[str],
+    *,
+    include_disabled: bool = False,
+) -> tuple[list[Repo], list[str]]:
+    """确定本次要同步的仓库, 返回 (要同步的仓库, 因为在配置里禁用而跳过的仓库名)
+
+    --repo 和 --exclude 都支持通配符, 38 个仓库里挑一批出来时比一个个敲名字方便:
+    ``--repo 'ComfyUI-*'``、``--exclude 'sd-webui-*'``。
+
+    通配符只会命中配置里已启用的仓库; 但把仓库名原样写出来时, 即使它在配置里是
+    enabled: false 也照样同步 —— 指名道姓就是明确想要它, 应该盖过配置里的默认值。
+    """
     by_name = {repo.src: repo for repo in config.repos}
+
+    def matching(pattern: str) -> list[str]:
+        if pattern in by_name:
+            return [pattern]
+        return [name for name in by_name if fnmatch.fnmatchcase(name, pattern)]
+
+    forced: set[str] = set()
+    if wanted:
+        picked: set[str] = set()
+        for pattern in wanted:
+            hit = matching(pattern)
+            if not hit:
+                raise MirrorError(f"--repo {pattern} 没有匹配到任何仓库")
+            if pattern in by_name and not by_name[pattern].enabled:
+                forced.add(pattern)
+            picked.update(hit)
+        candidates = [repo for repo in config.repos if repo.src in picked]
+    else:
+        candidates = list(config.repos)
+
+    # 对着全部仓库校验, 拼错的模式直接报错而不是静悄悄少同步或者少排除一个
+    removed: set[str] = set()
+    for pattern in excluded:
+        hit = matching(pattern)
+        if not hit:
+            raise MirrorError(f"--exclude {pattern} 没有匹配到任何仓库")
+        removed.update(hit)
+
     chosen: list[Repo] = []
-    for name in wanted:
-        if name not in by_name:
-            raise MirrorError(f"配置里没有仓库 {name}")
-        chosen.append(by_name[name])
-    return chosen
+    disabled: list[str] = []
+    for repo in candidates:
+        if repo.src in removed:
+            continue
+        if not repo.enabled and not include_disabled and repo.src not in forced:
+            disabled.append(repo.src)
+            continue
+        chosen.append(repo)
+
+    if not chosen:
+        raise MirrorError("筛选之后没有剩下任何仓库")
+    return chosen, disabled
 
 
 def prepare_environment(
@@ -687,7 +740,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         config = load_config(args.config)
         destinations = select_destinations(config, split_list(args.destination))
-        repos = select_repos(config, split_list(args.repo))
+        repos, disabled = select_repos(
+            config,
+            split_list(args.repo),
+            split_list(args.exclude),
+            include_disabled=args.include_disabled,
+        )
     except MirrorError as exc:
         print(f"配置错误: {exc}", file=sys.stderr)
         return 2
@@ -696,6 +754,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
 
     printer = Printer(colour=use_colour, tag_width=tag_width(repos, destinations))
+
+    if disabled:
+        printer.notice(f"配置里禁用而跳过的 {len(disabled)} 个仓库: {', '.join(disabled)}", YELLOW)
 
     if args.list_only:
         printer.notice(f"模式 {mode}, 共 {len(repos)} 个仓库 × {len(destinations)} 个平台")
@@ -790,3 +851,8 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n已中断", file=sys.stderr)
         sys.exit(130)
+    except BrokenPipeError:
+        # 输出被 head 之类的命令截断时安静退出, 不要打一堆回溯出来。
+        # 解释器退出时还会再冲一次 stdout, 所以这里把它接到 devnull 上。
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        sys.exit(141)

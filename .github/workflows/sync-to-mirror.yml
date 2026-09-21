@@ -27,10 +27,20 @@ on:
           - fanout
           - pairwise
       repo:
-        description: 只同步指定仓库 (源仓库名, 多个用逗号分隔, 留空为全部)
+        description: 只同步指定仓库 (源仓库名, 支持通配符, 多个用逗号分隔, 留空为全部)
         required: false
         type: string
         default: ''
+      exclude:
+        description: 排除指定仓库 (源仓库名, 支持通配符, 多个用逗号分隔)
+        required: false
+        type: string
+        default: ''
+      include_disabled:
+        description: 连同配置里 enabled 为 false 的仓库一起同步
+        required: false
+        type: boolean
+        default: false
       jobs:
         description: 同时克隆的仓库数
         required: false
@@ -73,6 +83,8 @@ jobs:
           INPUT_DESTINATION: ${{ inputs.destination }}
           INPUT_MODE: ${{ inputs.mode }}
           INPUT_REPO: ${{ inputs.repo }}
+          INPUT_EXCLUDE: ${{ inputs.exclude }}
+          INPUT_INCLUDE_DISABLED: ${{ inputs.include_disabled }}
           INPUT_JOBS: ${{ inputs.jobs }}
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
@@ -85,6 +97,12 @@ jobs:
           fi
           if [[ -n "${INPUT_REPO}" ]]; then
               args+=(--repo "${INPUT_REPO}")
+          fi
+          if [[ -n "${INPUT_EXCLUDE}" ]]; then
+              args+=(--exclude "${INPUT_EXCLUDE}")
+          fi
+          if [[ "${INPUT_INCLUDE_DISABLED}" == "true" ]]; then
+              args+=(--include-disabled)
           fi
           if [[ "${INPUT_DRY_RUN}" == "true" ]]; then
               args+=(--dry-run)
