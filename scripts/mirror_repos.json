@@ -79,6 +79,9 @@
     "WeiLin-ComfyUI-prompt-all-in-one",
     "comfyui_controlnet_aux",
     "sd-webui-prompt-all-in-one",
-    "sd-webui-regional-prompter"
+    "sd-webui-regional-prompter",
+    "Hanaikada",
+    "sd-webui-image-browser",
+    "comfyui-image-browser"
   ]
 }
