@@ -13,6 +13,7 @@ Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/
 |Build SD Protable Download Page|[![Build SD Protable Download Page](https://github.com/licyk/hub-action/actions/workflows/build-sd-portable-download-pages.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sd-portable-download-pages.yml)|
 |Build SD Protable Download Link|[![Build SD Protable Download Link](https://github.com/licyk/hub-action/actions/workflows/build-sd-portable-link.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sd-portable-link.yml)|
 |Sync Flash Attn Wheel|[![Sync Flash Attn Wheel](https://github.com/licyk/hub-action/actions/workflows/sync-flash-attn-whl.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-flash-attn-whl.yml)|
+|Build HF Xet Android Wheel|[![Build HF Xet Android Wheel](https://github.com/licyk/hub-action/actions/workflows/build-hf-xet-android.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-hf-xet-android.yml)|
 |Sync HuggingFace / ModelScope Repo|[![Sync HuggingFace / ModelScope Repo](https://github.com/licyk/hub-action/actions/workflows/sync-hf-to-ms.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/sync-hf-to-ms.yml)|
 |Build SageAttention|[![Build SageAttention](https://github.com/licyk/hub-action/actions/workflows/build-sageattn.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-sageattn.yml)|
 |Build Triton|[![Build Triton](https://github.com/licyk/hub-action/actions/workflows/build-triton.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/build-triton.yml)|
@@ -28,6 +29,30 @@ Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/
 |Query VCRedist x64 DLLs|[![Query VCRedist x64 DLLs](https://github.com/licyk/hub-action/actions/workflows/query-vcredist-x64-dlls.yml/badge.svg)](https://github.com/licyk/hub-action/actions/workflows/query-vcredist-x64-dlls.yml)|
 
 VCRedist x64 DLL 查询默认下载链接来源：[Microsoft Visual C++ Redistributable latest supported downloads](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-supported-redistributable-version)
+
+## 编译 Termux hf-xet wheel
+
+手动运行 [Build HF Xet Android Wheel](https://github.com/licyk/hub-action/actions/workflows/build-hf-xet-android.yml)：
+
+- `git_ref`：`huggingface/xet-core` 的分支、标签或 commit，默认 `main`。源码需要支持 `native-tls-vendored`；旧版源码结构不兼容时会直接报错。
+- `upload`：默认开启，构建成功后将 wheel 上传到 [ModelScope licyks/wheels](https://modelscope.cn/models/licyks/wheels/files) 的 `hf_xet/` 目录，沿用 Flash Attention 同步任务的 `MODELSCOPE_API_TOKEN` Secret。关闭后只保留 Actions artifact。
+
+目标为 **Termux / Android arm64**。工作流从 Termux 官方仓库获取当前 Python 包并校验 SHA256，读取 Python 版本和最低 Android API，再使用 Android NDK 交叉编译。产物绑定该 Python 小版本，不保证兼容其他版本或 APK 内嵌 Python。版本号附带 `+termux.g<commit>`，用于区分适配构建。
+
+构建时关闭默认 Rustls 后端，启用静态编译的 OpenSSL，并使用 Termux 的证书目录，避免 Android Java TLS 初始化依赖。Actions artifact 包含 wheel、构建信息、依赖树、Cargo.lock 和适配补丁；上传到 ModelScope 的只有 wheel。上传失败会使工作流失败，不会删除仓库中已有文件。
+
+在 Termux 中安装与当前 Python 小版本匹配的 wheel：
+
+```bash
+pkg update
+pkg install python python-pip ca-certificates
+python --version
+# 下载 artifact 或 ModelScope 中对应的 wheel 后：
+python -m pip install ./hf_xet-*.whl
+python -c "import hf_xet; print(hf_xet.__file__)"
+```
+
+工作流校验 wheel 标签和 ELF 架构，不执行手机上的运行测试。首次使用还需验证实际 Xet 下载；若证书路径未被正确识别，可设置 `SSL_CERT_FILE="$PREFIX/etc/tls/cert.pem"`。Linux manylinux wheel 不能替代这个 Android wheel，也不要通过改文件名绕过 pip 的兼容性检查。
 
 
 ## 同步仓库教程
