@@ -103,10 +103,12 @@ jobs:
           toolchain: '1.96.0'
           targets: aarch64-linux-android
 
-      - uses: android-actions/setup-android@v3
-
       - name: Install Android NDK
-        run: sdkmanager "ndk;$NDK_VERSION"
+        uses: android-actions/setup-android@v3
+        with:
+          # The action defaults to the obsolete SDK package "tools".
+          packages: ndk;${{ env.NDK_VERSION }}
+          log-accepted-android-sdk-licenses: false
 
       - name: Prepare Termux Python and source
         env:
