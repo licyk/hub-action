@@ -1,13 +1,20 @@
 name: Build HF Xet Android Wheel
 
 on:
+  schedule:
+    - cron: '20 16 * * *' # UTC 16:20 / 北京时间次日 00:20
   workflow_dispatch:
     inputs:
       git_ref:
-        description: xet-core branch, tag or commit (requires native-tls-vendored support)
+        description: latest stable release, or an xet-core branch/tag/commit
         required: true
         type: string
-        default: main
+        default: latest
+      force:
+        description: Rebuild all Python versions even if wheels already exist
+        required: true
+        type: boolean
+        default: false
       upload:
         description: Upload wheels to ModelScope licyks/wheels (hf_xet/)
         required: true
@@ -17,8 +24,51 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: hf-xet-android
+  cancel-in-progress: false
+
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+      matrix: ${{ steps.check.outputs.matrix }}
+      source_commit: ${{ steps.check.outputs.source_commit }}
+      source_version: ${{ steps.check.outputs.source_version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Install repository and version tools
+        env:
+          UV_SYSTEM_PYTHON: '1'
+        run: uv pip install 'sd-webui-all-in-one[models]' packaging
+
+      - name: Check upstream and uploaded versions
+        id: check
+        env:
+          HF_XET_REF: ${{ inputs.git_ref || 'latest' }}
+          FORCE_BUILD: ${{ inputs.force && 'true' || 'false' }}
+          GITHUB_TOKEN: ${{ github.token }}
+          MODELSCOPE_API_TOKEN: ${{ secrets.MODELSCOPE_API_TOKEN }}
+        run: python scripts/check_hf_xet_update.py
+
   build:
+    needs: check
+    if: ${{ needs.check.outputs.should_build == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.check.outputs.matrix) }}
+    name: Build Python ${{ matrix.python }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
@@ -34,7 +84,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: huggingface/xet-core
-          ref: ${{ inputs.git_ref }}
+          ref: ${{ needs.check.outputs.source_commit }}
           path: xet-core
           persist-credentials: false
 
@@ -59,9 +109,12 @@ jobs:
         run: sdkmanager "ndk;$NDK_VERSION"
 
       - name: Prepare Termux Python and source
+        env:
+          TARGET_PYTHON: ${{ matrix.python }}
+          EXPECTED_VERSION: ${{ needs.check.outputs.source_version }}
         run: |
-          python scripts/build_hf_xet_android.py prepare
-          python scripts/build_hf_xet_android.py patch
+          python scripts/build_hf_xet_android.py prepare --python-version "$TARGET_PYTHON"
+          python scripts/build_hf_xet_android.py patch --expected-version "$EXPECTED_VERSION"
 
       - name: Configure Android toolchain
         run: |
@@ -106,7 +159,7 @@ jobs:
           } > dist/toolchain.txt
           {
             echo '### hf-xet for Termux arm64'
-            echo 'Built for the current Termux Python; see build-info.json for the version and Android API.'
+            echo 'Built for the selected Termux Python; see build-info.json for its source, version and Android API.'
             echo 'TLS: vendored OpenSSL, using Termux certificates. Install ca-certificates in Termux.'
             echo 'Wheel metadata and ELF architecture checked; device import and Xet transfer are not tested here.'
             echo '```json'
@@ -116,13 +169,13 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: hf-xet-termux-arm64
+          name: hf-xet-termux-arm64-py${{ matrix.python }}
           path: dist/
           if-no-files-found: error
 
   upload:
-    needs: build
-    if: ${{ inputs.upload }}
+    needs: [check, build]
+    if: ${{ needs.check.outputs.should_build == 'true' && (github.event_name == 'schedule' || inputs.upload) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -138,7 +191,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: hf-xet-termux-arm64
+          pattern: hf-xet-termux-arm64-py*
           path: artifact
 
       - name: Install repository upload tools

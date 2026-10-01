@@ -14,9 +14,11 @@ def main() -> None:
     token = os.environ.get("MODELSCOPE_API_TOKEN")
     if not token:
         raise RuntimeError("MODELSCOPE_API_TOKEN is required")
-    wheels = sorted(args.directory.glob("hf_xet-*.whl"))
+    wheels = sorted(args.directory.rglob("hf_xet-*.whl"))
     if not wheels:
         raise RuntimeError(f"No hf-xet wheels found in {args.directory}")
+    if len({wheel.name for wheel in wheels}) != len(wheels):
+        raise RuntimeError("Duplicate wheel names in downloaded artifacts")
 
     from sd_webui_all_in_one.repo_manager import RepoManager
 
