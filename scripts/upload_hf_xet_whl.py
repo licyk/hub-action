@@ -24,6 +24,8 @@ def main() -> None:
 
     manager = RepoManager(ms_token=token)
     # Stage wheels only; build logs and metadata stay in the Actions artifact.
+    # 目标：https://modelscope.cn/models/licyks/wheels/files 下的 hf_xet/。
+    # 上传异常直接使工作流失败，不删除仓库已有文件；下次版本检查会补齐仍缺失的 wheel。
     with TemporaryDirectory() as temporary:
         directory = Path(temporary)
         for wheel in wheels:

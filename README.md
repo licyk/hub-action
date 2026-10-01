@@ -30,34 +30,6 @@ Github Action / 工具合集，工具可查看 [tools](https://github.com/licyk/
 
 VCRedist x64 DLL 查询默认下载链接来源：[Microsoft Visual C++ Redistributable latest supported downloads](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-supported-redistributable-version)
 
-## 编译 Termux hf-xet wheel
-
-工作流 [Build HF Xet Android Wheel](https://github.com/licyk/hub-action/actions/workflows/build-hf-xet-android.yml) 每天 UTC 16:20（北京时间次日 00:20）自动检查，也支持手动运行：
-
-- `git_ref`：默认 `latest`，跟随 PyPI 上最新的未撤回稳定版，解析对应的 `huggingface/xet-core` 标签并校验源码版本。也可指定分支、标签或 commit；源码需要支持 `native-tls-vendored`。
-- `force`：默认关闭；开启后强制重建 Python 3.10～3.14 的全部 wheel。
-- `upload`：默认开启，构建成功后将 wheel 上传到 [ModelScope licyks/wheels](https://modelscope.cn/models/licyks/wheels/files) 的 `hf_xet/` 目录，沿用 Flash Attention 同步任务的 `MODELSCOPE_API_TOKEN` Secret。关闭后只保留 Actions artifact。
-
-版本检查使用 `sd-webui-all-in-one` 的 `RepoManager.get_repo_file()` 查询目标仓库，通过 `PyWhlVersionComparison.compare_versions(..., ignore_local=True)` 比较已有 wheel 与上游版本，兼容历史产物的 `+termux` 后缀。按 Python ABI 分别检查：已有同版或更新版则跳过，旧版或缺失则加入 Actions 动态矩阵并行编译；全齐时跳过构建和上传。查询失败会报错，不会被当成空仓库。所有矩阵任务固定使用检查阶段解析出的同一个源码 commit。
-
-目标为 **Termux / Android arm64，Python 3.10、3.11、3.12、3.13、3.14**。开发包优先来自 Termux 官方仓库，旧版使用 [TUR](https://github.com/termux-user-repository/tur)。Python 3.12 使用固定的[社区发布包](https://github.com/adybag14-cyber/termux-python/releases/tag/termux-aarch64-20260914.47.1)（3.12.14，SHA256 固定在构建脚本中）。每个任务校验开发包 SHA256、实际 Python 版本、Android API 和 arm64 ELF 架构，再用 Android NDK 编译。产物绑定对应 Python 小版本，不保证兼容其他版本或 APK 内嵌 Python。版本号保持上游版本，不添加本地版本后缀；源码 commit 记录在构建产物的 `toolchain.txt` 中。若同版历史产物已有后缀，可手动启用 `force` 重建无后缀产物。
-
-构建时关闭默认 Rustls 后端，启用静态编译的 OpenSSL，并使用 Termux 的证书目录，避免 Android Java TLS 初始化依赖。每个 Python 版本有独立 artifact，包含 wheel、构建信息、依赖树、Cargo.lock 和适配补丁；矩阵构建成功后统一上传 wheel 到 ModelScope，避免并行提交同一个仓库。上传失败会使工作流失败，不会删除仓库中已有文件；下次检查会重新补齐仍缺失的 wheel。
-
-在 Termux 中安装与当前 Python 小版本匹配的 wheel：
-
-```bash
-pkg update
-pkg install python python-pip ca-certificates
-python --version
-# 只下载与当前解释器匹配的一个 wheel，再使用该解释器安装：
-python -m pip install ./hf_xet-*.whl
-python -c "import hf_xet; print(hf_xet.__file__)"
-```
-
-使用其他 Python 小版本时，改用对应的解释器（如 `python3.10 -m pip`），不要用当前 `python` 安装全部五种 wheel。工作流校验 wheel 标签和 ELF 架构，不执行手机上的运行测试。首次使用还需验证实际 Xet 下载；若证书路径未被正确识别，可设置 `SSL_CERT_FILE="$PREFIX/etc/tls/cert.pem"`。Linux manylinux wheel 不能替代这个 Android wheel，也不要通过改文件名绕过 pip 的兼容性检查。
-
-
 ## 同步仓库教程
 使用 [scripts/git_mirror.py](scripts/git_mirror.py) 进行同步，仓库列表统一写在 [scripts/mirror_repos.json](scripts/mirror_repos.json) 里，由 [Sync To Mirror](.github/workflows/sync-to-mirror.yml) 工作流调用。
 

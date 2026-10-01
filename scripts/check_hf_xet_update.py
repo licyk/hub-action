@@ -81,6 +81,8 @@ def resolve_source(selector: str, latest: str) -> tuple[str, str]:
 
 def plan_builds(files: list[str], version: str, force: bool = False) -> dict:
     """Compare each Python ABI independently, including partially uploaded releases."""
+    # 复用 sd-webui-all-in-one 的版本比较，ignore_local=True 兼容历史 +termux 后缀。
+    # 按 ABI 分别检查：同版或更新版跳过，旧版或缺失加入矩阵；部分上传后可再次补齐。
     current: dict[str, str | None] = dict.fromkeys(PYTHON_VERSIONS)
     latest = None
     for path in files:
@@ -141,7 +143,8 @@ def main() -> None:
     force = os.environ.get("FORCE_BUILD", "false").lower() == "true"
     upstream = latest_release()
     manager = RepoManager(ms_token=os.environ.get("MODELSCOPE_API_TOKEN"))
-    # A listing failure must fail the check, not masquerade as an empty repository.
+    # 使用 sd-webui-all-in-one 的 RepoManager 查询目标仓库。
+    # 查询失败必须报错，不能当作空仓库而触发全部重建。
     files = manager.get_repo_file(
         api_type="modelscope", repo_id="licyks/wheels", repo_type="model"
     )

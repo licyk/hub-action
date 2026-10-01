@@ -1,21 +1,28 @@
 name: Build HF Xet Android Wheel
 
 on:
+  # 每日检查上游版本，也可在 Actions 的 Build HF Xet Android Wheel 页面手动运行。
   schedule:
     - cron: '20 16 * * *' # UTC 16:20 / 北京时间次日 00:20
   workflow_dispatch:
     inputs:
       git_ref:
+        # latest 跟随 PyPI 最新未撤回稳定版，解析 xet-core 标签并校验源码版本。
+        # 也可指定分支、标签或 commit；源码必须支持 native-tls-vendored。
         description: latest stable release, or an xet-core branch/tag/commit
         required: true
         type: string
         default: latest
       force:
+        # 默认只补齐缺失或旧版 ABI；开启后重建 Python 3.10～3.14 全部 wheel。
+        # 同版历史产物已有 +termux 后缀时，可用此选项重建无后缀产物。
         description: Rebuild all Python versions even if wheels already exist
         required: true
         type: boolean
         default: false
       upload:
+        # 默认上传；关闭后只保留 Actions artifact。定时运行始终启用上传。
+        # 沿用 Flash Attention 同步任务的 MODELSCOPE_API_TOKEN Secret。
         description: Upload wheels to ModelScope licyks/wheels (hf_xet/)
         required: true
         type: boolean
@@ -63,6 +70,7 @@ jobs:
         run: python scripts/check_hf_xet_update.py
 
   build:
+    # 动态矩阵按 Python ABI 并行编译；产物全齐时跳过构建及上传。
     needs: check
     if: ${{ needs.check.outputs.should_build == 'true' }}
     strategy:
@@ -81,6 +89,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout hf-xet source
+        # 所有矩阵任务使用检查阶段解析出的同一个 commit，避免分支更新导致版本不一致。
         uses: actions/checkout@v6
         with:
           repository: huggingface/xet-core
@@ -148,6 +157,8 @@ jobs:
           python scripts/build_hf_xet_android.py verify
 
       - name: Record build details
+        # 每个 Python 版本的独立 artifact 保存 wheel、构建信息、依赖树、
+        # Cargo.lock 和适配补丁；源码 commit 与工具链版本写入 toolchain.txt。
         run: |
           cp build/hf-xet-android/build-info.json dist/
           cp build/hf-xet-android/dependencies.txt dist/
@@ -176,6 +187,7 @@ jobs:
           if-no-files-found: error
 
   upload:
+    # 等所有矩阵任务成功后统一上传，避免并行提交同一个 ModelScope 仓库。
     needs: [check, build]
     if: ${{ needs.check.outputs.should_build == 'true' && (github.event_name == 'schedule' || inputs.upload) }}
     runs-on: ubuntu-latest

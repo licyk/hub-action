@@ -16,10 +16,13 @@ import tomlkit
 
 TERMUX_REPO = "https://packages.termux.dev/apt/termux-main/"
 TUR_REPO = "https://tur.kcubeterm.com/"
+# 旧版开发包来源：https://github.com/termux-user-repository/tur
 TERMUX_PREFIX = "data/data/com.termux/files/usr"
 PYTHON_VERSIONS = ("3.10", "3.11", "3.12", "3.13", "3.14")
 # Python 3.12 is no longer in the rolling Termux/TUR indexes. Keep this
 # community build immutable, including the digest published by GitHub.
+# 固定的 Python 3.12.14 社区包：
+# https://github.com/adybag14-cyber/termux-python/releases/tag/termux-aarch64-20260914.47.1
 PYTHON_312_URL = (
     "https://github.com/adybag14-cyber/termux-python/releases/download/"
     "termux-aarch64-20260914.47.1/python3.12_3.12.14_aarch64.deb"
@@ -97,6 +100,8 @@ def read_sysconfig(path: Path) -> dict:
 
 def prepare(work_dir: Path, python_version: str) -> None:
     """Fetch verified Termux Python libraries and configure PyO3 for Android."""
+    # 开发包优先选 Termux 官方仓库，旧版使用 TUR，3.12 使用固定社区包。
+    # 校验 SHA256、实际 Python 版本、Android API 和 arm64 ELF 后交给 Android NDK 编译。
     work_dir.mkdir(parents=True, exist_ok=True)
     url, package = select_package(work_dir, python_version)
     deb = work_dir / "python.deb"
@@ -161,6 +166,9 @@ def prepare(work_dir: Path, python_version: str) -> None:
 
 def patch_source(source: Path, expected_version: str | None = None) -> None:
     """Select OpenSSL and a version-specific Python ABI in the build checkout."""
+    # 关闭默认 Rustls 后端，由工作流启用静态 OpenSSL，并指定 Termux 证书目录，
+    # 避免依赖 Android Java TLS 初始化。保留上游版本号，不添加本地版本后缀；
+    # 源码 commit 由工作流记录在 toolchain.txt 中。
     root_path = source / "Cargo.toml"
     binding_path = source / "hf_xet/Cargo.toml"
     root = cast(dict[str, Any], tomlkit.parse(root_path.read_text()))
@@ -193,6 +201,18 @@ def patch_source(source: Path, expected_version: str | None = None) -> None:
 
 def verify(dist: Path, work_dir: Path) -> None:
     """Reject wheels with the wrong Python ABI, Android tag, or ELF architecture."""
+    # 目标仅为 Termux / Android arm64，产物绑定所选 Python 小版本，
+    # 不保证兼容其他小版本或 APK 内嵌 Python；manylinux wheel 不能替代 Android wheel，
+    # 也不要通过改文件名绕过 pip 的兼容性检查。
+    # 在 Termux 中安装与当前解释器匹配的一个 wheel：
+    #   pkg update
+    #   pkg install python python-pip ca-certificates
+    #   python --version
+    #   python -m pip install ./hf_xet-*.whl
+    #   python -c "import hf_xet; print(hf_xet.__file__)"
+    # 使用其他小版本时改用对应解释器（如 python3.10 -m pip），不要安装全部五种 wheel。
+    # 此处只校验 wheel 标签和 ELF 架构，不执行手机运行测试；首次使用还需验证实际
+    # Xet 下载。若未正确识别证书路径，可设置 SSL_CERT_FILE="$PREFIX/etc/tls/cert.pem"。
     info_path = work_dir / "build-info.json"
     info = json.loads(info_path.read_text())
     python_tag = "cp" + info["python_version"].replace(".", "")
