@@ -13,7 +13,7 @@ from scripts import check_hf_xet_update as check
 from scripts import upload_hf_xet_whl as upload
 
 
-def wheel(python: str, version: str = "1.6.0+termux.g123") -> str:
+def wheel(python: str, version: str = "1.6.0") -> str:
     abi = "cp" + python.replace(".", "")
     return f"hf_xet/hf_xet-{version}-{abi}-{abi}-android_24_arm64_v8a.whl"
 
@@ -25,8 +25,10 @@ class UpdateTests(unittest.TestCase):
         self.assertIsNone(result["repository_latest"])
 
     def test_complete_release_ignores_local_suffix(self):
-        files = [wheel(python) for python in check.PYTHON_VERSIONS]
-        self.assertFalse(check.plan_builds(files, "1.6.0")["should_build"])
+        for version in ("1.6.0", "1.6.0+termux.g123"):
+            with self.subTest(version=version):
+                files = [wheel(python, version) for python in check.PYTHON_VERSIONS]
+                self.assertFalse(check.plan_builds(files, "1.6.0")["should_build"])
 
     def test_partial_release_only_builds_missing_or_outdated_abis(self):
         files = [wheel("3.10"), wheel("3.11", "1.5.2"), wheel("3.14")]

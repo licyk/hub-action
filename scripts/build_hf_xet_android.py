@@ -187,11 +187,6 @@ def patch_source(source: Path, expected_version: str | None = None) -> None:
             for feature in pyo3.get("features", [])
             if not feature.startswith("abi3")
         ]
-    commit = subprocess.check_output(
-        ["git", "-C", str(source), "rev-parse", "HEAD"], text=True
-    ).strip()
-    version = binding["package"]["version"].split("+", 1)[0]
-    binding["package"]["version"] = f"{version}+termux.g{commit[:12]}"
     root_path.write_text(tomlkit.dumps(root))
     binding_path.write_text(tomlkit.dumps(binding))
 
