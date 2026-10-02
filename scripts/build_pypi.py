@@ -2,10 +2,7 @@ import os
 from pathlib import Path
 
 import requests
-from sd_webui_all_in_one.package_analyzer import (
-    normalize_package_name,
-    parse_wheel_filename,
-)
+from sd_webui_all_in_one.package_analyzer import WheelFilename
 from sd_webui_all_in_one.retry_decorator import retryable
 from sd_webui_all_in_one.repo_manager import RepoManager
 
@@ -130,8 +127,7 @@ def group_files_by_package(
         filename = os.path.basename(file_path)
 
         try:
-            package_name = parse_wheel_filename(filename)
-            normalized_name = normalize_package_name(package_name)
+            normalized_name = WheelFilename.parse(filename).name
             packages.setdefault(normalized_name, []).append((filename, url))
         except ValueError as e:
             print(f"跳过无效的 wheel 文件: {filename} - {e}")

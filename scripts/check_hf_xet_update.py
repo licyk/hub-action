@@ -9,14 +9,20 @@ from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from packaging.utils import InvalidWheelFilename, parse_wheel_filename
-from packaging.version import Version
-from sd_webui_all_in_one.package_analyzer import PyWhlVersionComparison
+from sd_webui_all_in_one.package_analyzer import (
+    InvalidWheelFilename,
+    Version,
+    WheelFilename,
+)
 from sd_webui_all_in_one.repo_manager import RepoManager
 
 PYTHON_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
-VERSION_COMPARE = PyWhlVersionComparison("0")
 GITHUB_REPO = "huggingface/xet-core"
+
+
+def public_version(version: str) -> Version:
+    """Parse a version and drop its local segment (e.g. the legacy +termux suffix)."""
+    return Version.parse(version).without_local()
 
 
 def fetch(url: str) -> bytes:
@@ -33,12 +39,12 @@ def latest_release() -> str:
     releases = json.loads(fetch("https://pypi.org/pypi/hf-xet/json"))["releases"]
     latest = None
     for version, files in releases.items():
-        parsed = Version(version)
+        parsed = Version.parse(version)
         if parsed.is_prerelease or parsed.is_devrelease or not files:
             continue
         if all(file.get("yanked", False) for file in files):
             continue
-        if latest is None or VERSION_COMPARE.compare_versions(version, latest) > 0:
+        if latest is None or parsed > Version.parse(latest):
             latest = version
     if latest is None:
         raise RuntimeError("PyPI contains no non-yanked stable hf-xet release")
@@ -69,10 +75,7 @@ def resolve_source(selector: str, latest: str) -> tuple[str, str]:
         ).decode()
     )
     version = manifest["package"]["version"]
-    if (
-        selector == "latest"
-        and VERSION_COMPARE.compare_versions(version, latest, ignore_local=True) != 0
-    ):
+    if selector == "latest" and public_version(version) != public_version(latest):
         raise RuntimeError(
             f"Source version {version} does not match PyPI release {latest}"
         )
@@ -81,7 +84,7 @@ def resolve_source(selector: str, latest: str) -> tuple[str, str]:
 
 def plan_builds(files: list[str], version: str, force: bool = False) -> dict:
     """Compare each Python ABI independently, including partially uploaded releases."""
-    # 复用 sd-webui-all-in-one 的版本比较，ignore_local=True 兼容历史 +termux 后缀。
+    # 复用 sd-webui-all-in-one 的版本比较，去除本地版本标识以兼容历史 +termux 后缀。
     # 按 ABI 分别检查：同版或更新版跳过，旧版或缺失加入矩阵；部分上传后可再次补齐。
     current: dict[str, str | None] = dict.fromkeys(PYTHON_VERSIONS)
     latest = None
@@ -89,13 +92,12 @@ def plan_builds(files: list[str], version: str, force: bool = False) -> dict:
         if PurePosixPath(path).parts[:1] != ("hf_xet",):
             continue
         try:
-            name, wheel_version, _, tags = parse_wheel_filename(
-                PurePosixPath(path).name
-            )
+            wheel = WheelFilename.parse(PurePosixPath(path).name)
         except InvalidWheelFilename:
             continue
+        wheel_version = wheel.version
         if (
-            name != "hf-xet"
+            wheel.name != "hf-xet"
             or wheel_version.is_prerelease
             or wheel_version.is_devrelease
         ):
@@ -108,27 +110,20 @@ def plan_builds(files: list[str], version: str, force: bool = False) -> dict:
                 and tag.abi == abi
                 and re.fullmatch(r"android_\d+_arm64_v8a", tag.platform)
                 and int(tag.platform.split("_")[1]) <= 24
-                for tag in tags
+                for tag in wheel.tags
             ):
                 continue
             previous = current[python]
-            if (
-                previous is None
-                or VERSION_COMPARE.compare_versions(text, previous, ignore_local=True)
-                > 0
-            ):
+            if previous is None or public_version(text) > public_version(previous):
                 current[python] = text
-            if (
-                latest is None
-                or VERSION_COMPARE.compare_versions(text, latest, ignore_local=True) > 0
-            ):
+            if latest is None or public_version(text) > public_version(latest):
                 latest = text
     missing = [
         python
         for python, existing in current.items()
         if force
         or existing is None
-        or VERSION_COMPARE.compare_versions(version, existing, ignore_local=True) > 0
+        or public_version(version) > public_version(existing)
     ]
     return {
         "repository_latest": latest,

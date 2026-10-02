@@ -58,7 +58,7 @@ jobs:
       - name: Install repository and version tools
         env:
           UV_SYSTEM_PYTHON: '1'
-        run: uv pip install 'sd-webui-all-in-one[models]' packaging
+        run: uv pip install 'sd-webui-all-in-one[models]'
 
       - name: Check upstream and uploaded versions
         id: check
