@@ -45,13 +45,13 @@ jobs:
     # runs-on: windows-large
     runs-on: windows-latest
     steps:
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.12'
 
-      - uses: astral-sh/setup-uv@v8.1.0
+      - uses: astral-sh/setup-uv@v10.2.0
 
-      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: ilammy/msvc-dev-cmd@v1.13.0
 
       - name: Build wheel
         shell: powershell
@@ -97,6 +97,6 @@ jobs:
             python -m cibuildwheel python
           }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.1
         with:
           path: triton-windows/wheelhouse/*

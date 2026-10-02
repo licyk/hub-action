@@ -14,7 +14,7 @@ jobs:
     Test-HuggingFace-Mirror:
         runs-on: ubuntu-latest
         steps:
-        - uses: actions/checkout@v6
+        - uses: actions/checkout@v7.0.1
         - name: Test Avaliable HuggingFace Mirror
           shell: bash
           env:
