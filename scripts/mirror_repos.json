@@ -74,7 +74,7 @@
     "Hanafubuki",
     "comfyui-model-hub",
     "sd-forge-neo-kohya-hrfix",
-    "sd-model-hub",
+    "Hanakura",
     "sd-webui-model-hub",
     "WeiLin-ComfyUI-prompt-all-in-one",
     "comfyui_controlnet_aux",
@@ -82,6 +82,8 @@
     "sd-webui-regional-prompter",
     "Hanaikada",
     "sd-webui-image-browser",
-    "comfyui-image-browser"
+    "comfyui-image-browser",
+    "uv_python_warpper",
+    "python-env-repair"
   ]
 }
