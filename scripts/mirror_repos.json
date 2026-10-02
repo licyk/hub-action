@@ -84,6 +84,7 @@
     "sd-webui-image-browser",
     "comfyui-image-browser",
     "uv_python_warpper",
-    "python-env-repair"
+    "python-env-repair",
+    "Hanatsumi"
   ]
 }
