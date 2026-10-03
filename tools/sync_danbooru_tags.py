@@ -1357,14 +1357,18 @@ def _add_sync_arguments(p: argparse.ArgumentParser) -> None:
 
 def _add_translate_arguments(p: argparse.ArgumentParser) -> None:
     """翻译参数（translate / update 共用；API 层参考 sd-webui-prompt-all-in-one）。"""
-    p.add_argument("--translate-api", default="myMemory_free", metavar="KEY",
-                   help="翻译后端，默认 myMemory_free（免密钥），用 list-apis 子命令查看全部")
-    p.add_argument("--from-lang", default="en_US", help="源语言 locale 码（默认 en_US）")
-    p.add_argument("--to-lang", default="zh_CN", help="目标语言 locale 码（默认 zh_CN）")
+    api_choices = list(APIS)
+    language_choices = sorted({locale for item in APIS.values() for locale in item["support"]})
+    p.add_argument("--translate-api", choices=api_choices, default="myMemory_free",
+                   help="翻译后端，默认 myMemory_free（免密钥），用 list-apis 查看各后端详情")
+    p.add_argument("--from-lang", choices=language_choices, default="en_US",
+                   help="源语言 locale 码（默认 en_US；需所选后端支持）")
+    p.add_argument("--to-lang", choices=language_choices, default="zh_CN",
+                   help="目标语言 locale 码（默认 zh_CN；需所选后端支持）")
     p.add_argument("--api-key", default=None, help="API key（映射到该后端的 api_key 配置）")
     p.add_argument("--api-config", action="append", default=[], metavar="KEY=VALUE",
                    help="额外配置，可重复，如 --api-config region=eastasia（优先级最高）")
-    p.add_argument("--fallback-api", default=None, metavar="KEY",
+    p.add_argument("--fallback-api", choices=api_choices, default=None,
                    help="备用翻译后端：主后端整批失败（重试耗尽）时自动降级，用它把这一批再翻一遍；"
                         "不填则不降级。批级降级，不做条级混翻")
     p.add_argument("--fallback-api-config", action="append", default=[], metavar="KEY=VALUE",
