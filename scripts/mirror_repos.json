@@ -87,6 +87,8 @@
     "python-env-repair",
     "Hanatsumi",
     "rvc-next",
-    "rvc-next-webui"
+    "rvc-next-webui",
+    "Mizuoto",
+    "mizuoto-tts-webui"
   ]
 }
