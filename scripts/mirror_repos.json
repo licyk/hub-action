@@ -94,6 +94,11 @@
     "Hanamori",
     "Hanafubuki-dev",
     "kardia",
-    "pykardia"
+    "pykardia",
+    "hanafubuki-agent",
+    "hanafubuki-extension",
+    "hanafubuki-ext-portable-downloader",
+    "hanafubuki-ext-llama-cpp",
+    "hanafubuki-ext-deepseek-harness"
   ]
 }
