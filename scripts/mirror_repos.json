@@ -99,6 +99,7 @@
     "hanafubuki-extension",
     "hanafubuki-ext-portable-downloader",
     "hanafubuki-ext-llama-cpp",
-    "hanafubuki-ext-deepseek-harness"
+    "hanafubuki-ext-deepseek-harness",
+    "hanafubuki-launcher"
   ]
 }
